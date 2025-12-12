@@ -73,7 +73,7 @@ export default function RootLayout({
           sizes="16x16"
           href="/icon-16x16.png"
         />
-        <link rel="shortcut icon" href="/dntcell-logo .ico" />
+        <link rel="shortcut icon" href="/dntcell-logo.ico" />
       </head>
       <body className="antialiased">
         <AppProvider>

@@ -42,10 +42,17 @@ export interface ProductFilters {
  * Get all products with optional filtering
  */
 export const getProducts = async (filters?: ProductFilters): Promise<Product[]> => {
-  const response = await axiosClient.get<Product[]>('/products', { 
-    params: filters 
-  })
-  return response.data
+  try {
+    const response = await axiosClient.get<Product[]>('/products', { 
+      params: filters 
+    })
+    // Ensure we always return an array
+    return Array.isArray(response.data) ? response.data : []
+  } catch (error) {
+    console.error('Failed to fetch products:', error)
+    // Return empty array on error to prevent crashes
+    return []
+  }
 }
 
 /**
@@ -68,30 +75,45 @@ export const getProductImages = async (productId: string): Promise<ProductImage[
  * Search products
  */
 export const searchProducts = async (query: string, limit = 20): Promise<Product[]> => {
-  const response = await axiosClient.get<Product[]>('/products/search', {
-    params: { q: query, limit }
-  })
-  return response.data
+  try {
+    const response = await axiosClient.get<Product[]>('/products/search', {
+      params: { q: query, limit }
+    })
+    return Array.isArray(response.data) ? response.data : []
+  } catch (error) {
+    console.error('Failed to search products:', error)
+    return []
+  }
 }
 
 /**
  * Get featured products
  */
 export const getFeaturedProducts = async (limit = 10): Promise<Product[]> => {
-  const response = await axiosClient.get<Product[]>('/products/featured', {
-    params: { limit }
-  })
-  return response.data
+  try {
+    const response = await axiosClient.get<Product[]>('/products/featured', {
+      params: { limit }
+    })
+    return Array.isArray(response.data) ? response.data : []
+  } catch (error) {
+    console.error('Failed to fetch featured products:', error)
+    return []
+  }
 }
 
 /**
  * Get products by category
  */
 export const getProductsByCategory = async (categoryId: string, limit?: number): Promise<Product[]> => {
-  const response = await axiosClient.get<Product[]>('/products', {
-    params: { category: categoryId, limit }
-  })
-  return response.data
+  try {
+    const response = await axiosClient.get<Product[]>('/products', {
+      params: { category: categoryId, limit }
+    })
+    return Array.isArray(response.data) ? response.data : []
+  } catch (error) {
+    console.error('Failed to fetch products by category:', error)
+    return []
+  }
 }
 
 const productService = {

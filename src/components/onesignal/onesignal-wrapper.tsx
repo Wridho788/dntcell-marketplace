@@ -13,5 +13,11 @@ interface OneSignalWrapperProps {
 }
 
 export function OneSignalWrapper({ appId }: OneSignalWrapperProps) {
+  // Don't render if no App ID provided
+  if (!appId) {
+    console.info('OneSignal App ID not provided. Push notifications disabled.')
+    return null
+  }
+  
   return <OneSignalClient appId={appId} />
 }

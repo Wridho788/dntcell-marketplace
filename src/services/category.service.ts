@@ -15,8 +15,13 @@ export interface Category {
  * Get all categories
  */
 export const getCategories = async (): Promise<Category[]> => {
-  const response = await axiosClient.get<Category[]>('/categories')
-  return response.data
+  try {
+    const response = await axiosClient.get<Category[]>('/categories')
+    return Array.isArray(response.data) ? response.data : []
+  } catch (error) {
+    console.error('Failed to fetch categories:', error)
+    return []
+  }
 }
 
 /**
