@@ -12,6 +12,7 @@ if (!process.env.NEXT_PUBLIC_API_URL && typeof window !== 'undefined' && window.
 
 /**
  * Create axios instance with default configuration
+ * For Supabase PostgREST, we need apikey header
  */
 const axiosClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -19,20 +20,25 @@ const axiosClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+    'Prefer': 'return=representation', // Supabase: return updated data
   },
 })
 
 /**
  * Request interceptor - Add authentication token
+ * For Supabase PostgREST: use Bearer token in Authorization header
  */
 axiosClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Get token from localStorage/cookies/session storage
-    // Adjust based on your auth implementation
+    // Get token from localStorage (Supabase auth token)
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
     
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
+    } else if (config.headers) {
+      // Fallback to anon key if no user token
+      config.headers.Authorization = `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''}`
     }
 
     return config

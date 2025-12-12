@@ -40,25 +40,46 @@ export interface CreateOrderPayload {
 
 /**
  * Get all orders for current user
+ * Supabase PostgREST format: /orders?select=*&order=created_at.desc
+ * Note: User filtering handled by RLS
  */
 export const getOrdersByUser = async (): Promise<Order[]> => {
-  const response = await axiosClient.get<Order[]>('/orders')
+  const response = await axiosClient.get<Order[]>('/orders', {
+    params: {
+      select: '*,product:products(*)',
+      order: 'created_at.desc'
+    }
+  })
   return response.data
 }
 
 /**
  * Get single order by ID
+ * Supabase PostgREST format: /orders?id=eq.123&select=*
  */
 export const getOrderById = async (id: string): Promise<Order> => {
-  const response = await axiosClient.get<Order>(`/orders/${id}`)
-  return response.data
+  const response = await axiosClient.get<Order[]>('/orders', {
+    params: {
+      id: `eq.${id}`,
+      select: '*,product:products(*)',
+      limit: 1
+    }
+  })
+  return response.data[0]
 }
 
 /**
  * Get order status logs
+ * Supabase PostgREST format: /order_status_logs?order_id=eq.123
  */
 export const getOrderStatusLogs = async (orderId: string): Promise<OrderStatusLog[]> => {
-  const response = await axiosClient.get<OrderStatusLog[]>(`/orders/${orderId}/status-logs`)
+  const response = await axiosClient.get<OrderStatusLog[]>('/order_status_logs', {
+    params: {
+      order_id: `eq.${orderId}`,
+      select: '*',
+      order: 'created_at.asc'
+    }
+  })
   return response.data
 }
 

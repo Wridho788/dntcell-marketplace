@@ -28,26 +28,41 @@ export interface UpdateProfilePayload {
 
 /**
  * Get current user profile
+ * Supabase PostgREST format: /profiles?select=*&limit=1
+ * Note: User filtering handled by RLS
  */
 export const getProfile = async (): Promise<Profile> => {
-  const response = await axiosClient.get<Profile>('/profile')
-  return response.data
+  const response = await axiosClient.get<Profile[]>('/profiles', {
+    params: {
+      select: '*',
+      limit: 1
+    }
+  })
+  return response.data[0]
 }
 
 /**
  * Get profile by user ID
+ * Supabase PostgREST format: /profiles?user_id=eq.123&select=*
  */
 export const getProfileByUserId = async (userId: string): Promise<Profile> => {
-  const response = await axiosClient.get<Profile>(`/profile/${userId}`)
-  return response.data
+  const response = await axiosClient.get<Profile[]>('/profiles', {
+    params: {
+      user_id: `eq.${userId}`,
+      select: '*',
+      limit: 1
+    }
+  })
+  return response.data[0]
 }
 
 /**
  * Update current user profile
+ * Supabase PostgREST format: PATCH /profiles with RLS filtering
  */
 export const updateProfile = async (payload: UpdateProfilePayload): Promise<Profile> => {
-  const response = await axiosClient.patch<Profile>('/profile', payload)
-  return response.data
+  const response = await axiosClient.patch<Profile[]>('/profiles', payload)
+  return response.data[0]
 }
 
 /**

@@ -34,18 +34,32 @@ export interface UpdateNegotiationPayload {
 
 /**
  * Get all negotiations for current user
+ * Supabase PostgREST format: /negotiations?select=*&order=created_at.desc
+ * Note: User filtering handled by RLS (Row Level Security)
  */
 export const getNegotiationsByUser = async (): Promise<Negotiation[]> => {
-  const response = await axiosClient.get<Negotiation[]>('/negotiations')
+  const response = await axiosClient.get<Negotiation[]>('/negotiations', {
+    params: {
+      select: '*,product:products(*)',
+      order: 'created_at.desc'
+    }
+  })
   return response.data
 }
 
 /**
  * Get single negotiation detail
+ * Supabase PostgREST format: /negotiations?id=eq.123&select=*
  */
 export const getNegotiationDetail = async (id: string): Promise<Negotiation> => {
-  const response = await axiosClient.get<Negotiation>(`/negotiations/${id}`)
-  return response.data
+  const response = await axiosClient.get<Negotiation[]>('/negotiations', {
+    params: {
+      id: `eq.${id}`,
+      select: '*,product:products(*)',
+      limit: 1
+    }
+  })
+  return response.data[0]
 }
 
 /**
