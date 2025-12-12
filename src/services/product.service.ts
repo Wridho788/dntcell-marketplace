@@ -1,6 +1,27 @@
 import axiosClient from '@/libs/axios/axiosClient'
 
-// Product types
+// Supabase Product Schema (raw dari database)
+interface SupabaseProduct {
+  id: string
+  seller_id: string
+  category_id: string
+  name: string
+  description?: string
+  condition: 'new' | 'like-new' | 'good' | 'fair'
+  base_price: number
+  selling_price: number
+  negotiable: boolean
+  status: 'available' | 'unavailable' | 'sold'
+  reject_note?: string
+  details?: Record<string, unknown>
+  main_image_url?: string
+  created_at: string
+  is_active: boolean
+  stock: number
+  updated_at: string
+}
+
+// Product types (normalized untuk frontend)
 export interface Product {
   id: string
   name: string
@@ -18,6 +39,27 @@ export interface Product {
   created_at: string
   updated_at: string
 }
+
+/**
+ * Transform Supabase product to frontend format
+ */
+const transformProduct = (supabaseProduct: SupabaseProduct): Product => ({
+  id: supabaseProduct.id,
+  name: supabaseProduct.name,
+  price: supabaseProduct.selling_price,
+  original_price: supabaseProduct.base_price !== supabaseProduct.selling_price ? supabaseProduct.base_price : undefined,
+  condition: supabaseProduct.condition,
+  status: supabaseProduct.status,
+  description: supabaseProduct.description,
+  specifications: supabaseProduct.details || {},
+  images: supabaseProduct.main_image_url ? [supabaseProduct.main_image_url] : [],
+  category_id: supabaseProduct.category_id,
+  seller_id: supabaseProduct.seller_id,
+  negotiable: supabaseProduct.negotiable,
+  stock: supabaseProduct.stock,
+  created_at: supabaseProduct.created_at,
+  updated_at: supabaseProduct.updated_at,
+})
 
 export interface ProductImage {
   id: string
@@ -52,14 +94,15 @@ export const getProducts = async (filters?: ProductFilters): Promise<Product[]> 
     if (filters?.category) params['category_id'] = `eq.${filters.category}`
     if (filters?.condition) params['condition'] = `eq.${filters.condition}`
     if (filters?.status) params['status'] = `eq.${filters.status}`
-    if (filters?.minPrice) params['price'] = `gte.${filters.minPrice}`
-    if (filters?.maxPrice) params['price'] = params['price'] ? `${params['price']},lte.${filters.maxPrice}` : `lte.${filters.maxPrice}`
+    if (filters?.minPrice) params['selling_price'] = `gte.${filters.minPrice}`
+    if (filters?.maxPrice) params['selling_price'] = params['selling_price'] ? `${params['selling_price']},lte.${filters.maxPrice}` : `lte.${filters.maxPrice}`
     if (filters?.search) params['name'] = `ilike.*${filters.search}*`
     if (filters?.limit) params['limit'] = filters.limit.toString()
     if (filters?.offset) params['offset'] = filters.offset.toString()
 
-    const response = await axiosClient.get<Product[]>('/products', { params })
-    return Array.isArray(response.data) ? response.data : []
+    const response = await axiosClient.get<SupabaseProduct[]>('/products', { params })
+    const products = Array.isArray(response.data) ? response.data : []
+    return products.map(transformProduct)
   } catch (error) {
     console.error('Failed to fetch products:', error)
     return []
@@ -71,14 +114,14 @@ export const getProducts = async (filters?: ProductFilters): Promise<Product[]> 
  * Supabase PostgREST format: /products?id=eq.123&select=*
  */
 export const getProductById = async (id: string): Promise<Product> => {
-  const response = await axiosClient.get<Product[]>('/products', {
+  const response = await axiosClient.get<SupabaseProduct[]>('/products', {
     params: {
       id: `eq.${id}`,
       select: '*',
       limit: 1
     }
   })
-  return response.data[0]
+  return transformProduct(response.data[0])
 }
 
 /**
@@ -102,7 +145,7 @@ export const getProductImages = async (productId: string): Promise<ProductImage[
  */
 export const searchProducts = async (query: string, limit = 20): Promise<Product[]> => {
   try {
-    const response = await axiosClient.get<Product[]>('/products', {
+    const response = await axiosClient.get<SupabaseProduct[]>('/products', {
       params: {
         or: `(name.ilike.*${query}*,description.ilike.*${query}*)`,
         select: '*',
@@ -110,7 +153,8 @@ export const searchProducts = async (query: string, limit = 20): Promise<Product
         order: 'created_at.desc'
       }
     })
-    return Array.isArray(response.data) ? response.data : []
+    const products = Array.isArray(response.data) ? response.data : []
+    return products.map(transformProduct)
   } catch (error) {
     console.error('Failed to search products:', error)
     return []
@@ -123,7 +167,7 @@ export const searchProducts = async (query: string, limit = 20): Promise<Product
  */
 export const getFeaturedProducts = async (limit = 10): Promise<Product[]> => {
   try {
-    const response = await axiosClient.get<Product[]>('/products', {
+    const response = await axiosClient.get<SupabaseProduct[]>('/products', {
       params: {
         status: 'eq.available',
         select: '*',
@@ -131,7 +175,8 @@ export const getFeaturedProducts = async (limit = 10): Promise<Product[]> => {
         order: 'created_at.desc'
       }
     })
-    return Array.isArray(response.data) ? response.data : []
+    const products = Array.isArray(response.data) ? response.data : []
+    return products.map(transformProduct)
   } catch (error) {
     console.error('Failed to fetch featured products:', error)
     return []
@@ -151,8 +196,9 @@ export const getProductsByCategory = async (categoryId: string, limit?: number):
     }
     if (limit) params.limit = limit.toString()
 
-    const response = await axiosClient.get<Product[]>('/products', { params })
-    return Array.isArray(response.data) ? response.data : []
+    const response = await axiosClient.get<SupabaseProduct[]>('/products', { params })
+    const products = Array.isArray(response.data) ? response.data : []
+    return products.map(transformProduct)
   } catch (error) {
     console.error('Failed to fetch products by category:', error)
     return []
