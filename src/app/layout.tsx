@@ -4,6 +4,10 @@ import { PageTransition } from '@/components/ui/page-transition'
 import { OneSignalWrapper } from '@/components/onesignal/onesignal-wrapper'
 import "./globals.css"
 
+// Force dynamic rendering for all pages
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

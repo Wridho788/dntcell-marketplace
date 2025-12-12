@@ -19,6 +19,8 @@ const nextConfig = withPWA({
 })({
   reactStrictMode: true,
   swcMinify: true,
+  // Prevent static optimization for pages that need runtime env vars
+  output: 'standalone',
   experimental: {
   },
   images: {
