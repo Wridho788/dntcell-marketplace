@@ -2,9 +2,13 @@ import { generateMetadata as genMeta, generateOrganizationSchema, generateBreadc
 import { getProducts } from '@/services/product.service'
 import { getCategories } from '@/services/category.service'
 import { HomePageClient } from './home-client'
+import Script from 'next/script'
 
 // ISR: Revalidate every 60 seconds
 export const revalidate = 60
+
+// Force dynamic rendering to prevent hydration issues
+export const dynamic = 'force-dynamic'
 
 // Metadata for SEO
 export async function generateMetadata() {
@@ -35,13 +39,15 @@ export default async function HomePage() {
   return (
     <>
       {/* JSON-LD Structured Data */}
-      <script
+      <Script
+        id="organization-schema"
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(organizationSchema),
         }}
       />
-      <script
+      <Script
+        id="breadcrumb-schema"
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(breadcrumbSchema),
