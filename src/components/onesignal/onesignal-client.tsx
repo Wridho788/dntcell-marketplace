@@ -44,6 +44,18 @@ export function OneSignalClient({ appId }: OneSignalClientProps) {
         // Wait for OneSignal to be ready
         const OneSignal = await window.OneSignalDeferred
 
+        // Check if OneSignal loaded properly
+        if (!OneSignal || typeof OneSignal.init !== 'function') {
+          console.error('OneSignal SDK failed to load properly')
+          return
+        }
+
+        // Check if app ID is provided
+        if (!appId) {
+          console.warn('OneSignal App ID not provided. Push notifications will not work.')
+          return
+        }
+
         // Initialize
         await OneSignal.init({
           appId: appId,

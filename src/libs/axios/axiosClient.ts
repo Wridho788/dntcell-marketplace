@@ -1,8 +1,14 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 
 // Base API configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+// In production, this MUST be set via environment variable
+// For now, return empty to prevent localhost calls in production
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:3001/api' : '')
 const API_TIMEOUT = 30000 // 30 seconds
+
+if (!process.env.NEXT_PUBLIC_API_URL && typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+  console.warn('⚠️ NEXT_PUBLIC_API_URL is not set. API calls will fail. Please configure your backend API URL in Vercel environment variables.')
+}
 
 /**
  * Create axios instance with default configuration
