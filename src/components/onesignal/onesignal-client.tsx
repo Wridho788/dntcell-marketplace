@@ -33,26 +33,42 @@ export function OneSignalClient({ appId }: OneSignalClientProps) {
           const script = document.createElement('script')
           script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js'
           script.async = true
+          
+          // Add error handler for script loading
+          script.onerror = () => {
+            console.warn('OneSignal SDK failed to load from CDN. Push notifications disabled.')
+          }
+          
           document.head.appendChild(script)
 
-          // Wait for script to load
-          await new Promise((resolve) => {
-            script.onload = resolve
-          })
+          // Wait for script to load with timeout
+          await Promise.race([
+            new Promise((resolve) => {
+              script.onload = resolve
+            }),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('OneSignal SDK load timeout')), 10000)
+            )
+          ])
         }
 
-        // Wait for OneSignal to be ready
-        const OneSignal = await window.OneSignalDeferred
+        // Wait for OneSignal to be ready with timeout
+        const OneSignal = await Promise.race([
+          window.OneSignalDeferred,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('OneSignal initialization timeout')), 5000)
+          )
+        ])
 
         // Check if OneSignal loaded properly
         if (!OneSignal || typeof OneSignal.init !== 'function') {
-          console.error('OneSignal SDK failed to load properly')
+          console.warn('OneSignal SDK not available. Push notifications disabled.')
           return
         }
 
         // Check if app ID is provided
         if (!appId) {
-          console.warn('OneSignal App ID not provided. Push notifications will not work.')
+          console.warn('OneSignal App ID not provided. Push notifications disabled.')
           return
         }
 
@@ -95,7 +111,9 @@ export function OneSignalClient({ appId }: OneSignalClientProps) {
         }
 
       } catch (error) {
-        console.error('Error initializing OneSignal:', error)
+        // Silent fail - don't spam console with errors
+        // OneSignal is optional feature, app should work without it
+        console.info('Push notifications not available:', error instanceof Error ? error.message : 'Unknown error')
       }
     }
 
@@ -108,27 +126,24 @@ export function OneSignalClient({ appId }: OneSignalClientProps) {
     if (!isInitialized || !window.OneSignal) return
 
     const handleAuthChange = async () => {
-      if (isLoggedIn && user?.id) {
-        // User logged in - register or update player ID
-        if (playerId) {
-          await registerPlayerId(user.id, playerId)
-        }
+      try {
+        if (isLoggedIn && user?.id) {
+          // User logged in - register or update player ID
+          if (playerId) {
+            await registerPlayerId(user.id, playerId)
+          }
 
-        // Set external user ID
-        try {
+          // Set external user ID
           await window.OneSignal.login(user.id)
           console.log('OneSignal external user ID set:', user.id)
-        } catch (error) {
-          console.error('Error setting OneSignal external user ID:', error)
-        }
-      } else {
-        // User logged out - logout from OneSignal
-        try {
+        } else {
+          // User logged out - logout from OneSignal
           await window.OneSignal.logout()
           console.log('OneSignal user logged out')
-        } catch (error) {
-          console.error('Error logging out from OneSignal:', error)
         }
+      } catch (error) {
+        // Silent fail for auth changes
+        console.info('OneSignal auth update skipped:', error instanceof Error ? error.message : 'Unknown error')
       }
     }
 
@@ -169,7 +184,7 @@ async function registerPlayerId(userId: string, playerId: string) {
  */
 export async function requestNotificationPermission() {
   if (!window.OneSignal) {
-    console.error('OneSignal not initialized')
+    console.info('OneSignal not available. Cannot request notification permission.')
     return false
   }
 
@@ -178,7 +193,7 @@ export async function requestNotificationPermission() {
     console.log('Notification permission:', permission)
     return permission
   } catch (error) {
-    console.error('Error requesting notification permission:', error)
+    console.info('Error requesting notification permission:', error instanceof Error ? error.message : 'Unknown error')
     return false
   }
 }
@@ -192,8 +207,7 @@ export async function isNotificationEnabled() {
   try {
     const permission = await window.OneSignal.Notifications.permission
     return permission
-  } catch (error) {
-    console.error('Error checking notification permission:', error)
+  } catch {
     return false
   }
 }
