@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next"
+import Script from 'next/script'
 import { AppProvider } from '@/components/providers/app-provider'
 import { PageTransition } from '@/components/ui/page-transition'
 import { OneSignalWrapper } from '@/components/onesignal/onesignal-wrapper'
@@ -85,9 +86,10 @@ export default function RootLayout({
           </PageTransition>
         </AppProvider>
         
-        {/* Service Worker - Disabled for now to debug caching issues */}
-        {/* 
-        <script
+        {/* Service Worker Registration */}
+        <Script
+          id="sw-register"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
@@ -105,7 +107,6 @@ export default function RootLayout({
             `,
           }}
         />
-        */}
       </body>
     </html>
   );
