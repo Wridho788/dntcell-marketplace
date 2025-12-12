@@ -3,6 +3,8 @@ import Script from 'next/script'
 import { AppProvider } from '@/components/providers/app-provider'
 import { PageTransition } from '@/components/ui/page-transition'
 import { OneSignalWrapper } from '@/components/onesignal/onesignal-wrapper'
+import { SplashScreen } from '@/components/ui/splash-screen'
+import { PWAInstallPrompt } from '@/components/ui/pwa-install-prompt'
 import "./globals.css"
 
 // Force dynamic rendering for all pages
@@ -14,7 +16,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#2563eb",
+  themeColor: "#0e05ad",
 }
 
 export const metadata: Metadata = {
@@ -48,35 +50,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <head>
-        <meta name="application-name" content="DNTCell Marketplace" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="DNTCell" />
-        <meta name="format-detection" content="telephone=no" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="msapplication-config" content="/icons/browserconfig.xml" />
-        <meta name="msapplication-TileColor" content="#000000" />
-        <meta name="msapplication-tap-highlight" content="no" />
-        <meta name="theme-color" content="#2563eb" />
-
-        <link rel="apple-touch-icon" href="/icon-192x192.png" />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="32x32"
-          href="/icon-32x32.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="16x16"
-          href="/icon-16x16.png"
-        />
-        <link rel="shortcut icon" href="/dntcell-logo.ico" />
-      </head>
-      <body className="antialiased">
+    <html lang="id" suppressHydrationWarning>
+      <body className="antialiased" suppressHydrationWarning>
+        {/* Splash Screen - Only on first visit */}
+        <SplashScreen />
+        
+        {/* PWA Install Prompt */}
+        <PWAInstallPrompt />
+        
         <AppProvider>
           {/* OneSignal Push Notifications */}
           <OneSignalWrapper appId={process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || ''} />

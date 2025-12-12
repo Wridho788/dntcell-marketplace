@@ -3,9 +3,10 @@
   "short_name": "DNTCell",
   "description": "Platform jual beli second-hand HP & Laptop terpercaya",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "theme_color": "#0e05ad",
   "orientation": "portrait-primary",
   "icons": [
     {
@@ -38,5 +39,7 @@
       "sizes": "1280x720",
       "type": "image/png"
     }
-  ]
+  ],
+  "gcm_sender_id": "482941778795",
+  "gcm_sender_id_comment": "Do not change the GCM Sender ID"
 }

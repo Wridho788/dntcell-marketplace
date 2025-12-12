@@ -1,11 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { MobileHeader } from '@/components/navigation/mobile-header'
-import { ApiConfigWarning } from '@/components/ui/api-config-warning'
 import { CategoryCard } from '@/components/category/category-card'
 import { ProductSection } from '@/components/home/product-section'
 import type { Product } from '@/services/product.service'
@@ -23,9 +22,15 @@ export function HomePageClient({
   initialFeaturedProducts,
 }: HomePageClientProps) {
   const router = useRouter()
-  const [products] = useState(initialProducts)
-  const [categories] = useState(initialCategories)
-  const [featuredProducts] = useState(initialFeaturedProducts)
+  const [products] = useState(initialProducts || [])
+  const [categories] = useState(initialCategories || [])
+  const [featuredProducts] = useState(initialFeaturedProducts || [])
+
+  useEffect(() => {
+    // Debug log to verify data
+    console.log('Home Client - Products loaded:', products.length)
+    console.log('Home Client - Categories loaded:', categories.length)
+  }, [products, categories])
 
   return (
     <>
@@ -36,10 +41,7 @@ export function HomePageClient({
         wishlistCount={0}
       />
       
-      <main className="container-mobile py-6 space-y-6">
-        {/* API Configuration Warning */}
-        <ApiConfigWarning />
-        
+      <main className="container-mobile py-6 space-y-6">        
         {/* Search Bar */}
         <div 
           onClick={() => router.push('/search')}
@@ -53,7 +55,7 @@ export function HomePageClient({
           }}
         >
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
-          <div className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-neutral-200 text-neutral-400">
+          <div className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-neutral-200 text-neutral-400 bg-white hover:border-primary-800 transition-colors">
             Cari HP, Laptop, atau Aksesoris...
           </div>
         </div>
@@ -64,7 +66,7 @@ export function HomePageClient({
             <h2 id="categories-heading" className="font-bold text-neutral-900 text-base leading-[1.4]">
               Kategori
             </h2>
-            <Link href="/categories" className="text-sm text-primary-600 font-semibold hover:underline">
+            <Link href="/categories" className="text-sm text-primary-800 font-semibold hover:underline">
               Lihat Semua
             </Link>
           </div>
@@ -95,7 +97,7 @@ export function HomePageClient({
           <ProductSection
             title="Semua Produk"
             products={products}
-            emptyMessage="Belum ada produk tersedia"
+            emptyMessage="Belum ada produk tersedia. Silakan cek koneksi internet Anda atau coba lagi nanti."
           />
         </section>
       </main>

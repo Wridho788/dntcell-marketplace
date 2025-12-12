@@ -9,19 +9,33 @@ module.exports = {
     extend: {
       // Brand Color Palette
       colors: {
-        // Primary Brand Colors
+        // Primary Brand Colors - Blue (#0e05ad)
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6', // Main primary
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#172554',
+          50: '#ebebfc',
+          100: '#d1cdf8',
+          200: '#b5aef3',
+          300: '#998fef',
+          400: '#7d70eb',
+          500: '#6151e7',
+          600: '#4532e3',
+          700: '#2913df',
+          800: '#0e05ad', // Main primary
+          900: '#0b0489',
+          950: '#080365',
+        },
+        // Accent Colors - Orange (#ff7b00)
+        accent: {
+          50: '#fff4e6',
+          100: '#ffe4c2',
+          200: '#ffd499',
+          300: '#ffc470',
+          400: '#ffb447',
+          500: '#ffa41e',
+          600: '#ff9400',
+          700: '#ff7b00', // Main accent
+          800: '#d66600',
+          900: '#ad5200',
+          950: '#843e00',
         },
         // Secondary Colors
         secondary: {

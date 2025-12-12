@@ -33,7 +33,7 @@ export function PriceTag({
   return (
     <div className="flex items-baseline gap-2 flex-wrap">
       <div className="flex items-baseline gap-2">
-        <p className={`${sizeClasses[size]} font-bold text-primary-600 leading-none`}>
+        <p className={`${sizeClasses[size]} font-bold text-primary-800 leading-none`}>
           {formatCurrency(price)}
         </p>
         
@@ -42,7 +42,7 @@ export function PriceTag({
             <p className={`${originalSizeClasses[size]} text-neutral-400 line-through leading-none`}>
               {formatCurrency(originalPrice)}
             </p>
-            <span className="px-2 py-0.5 bg-error-100 text-error-700 text-xs font-semibold rounded">
+            <span className="px-2 py-0.5 bg-accent-100 text-accent-800 text-xs font-semibold rounded">
               -{discountPercent}%
             </span>
           </>

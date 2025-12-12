@@ -10,13 +10,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 focus-visible:ring-primary-400 shadow-sm',
+          'bg-primary-800 text-white hover:bg-primary-900 active:bg-primary-950 focus-visible:ring-primary-600 shadow-sm',
         secondary:
           'bg-secondary-100 text-secondary-900 hover:bg-secondary-200 active:bg-secondary-300 focus-visible:ring-secondary-400',
         success:
           'bg-success-600 text-white hover:bg-success-700 active:bg-success-800 focus-visible:ring-success-400 shadow-sm',
+        accent:
+          'bg-accent-700 text-white hover:bg-accent-800 active:bg-accent-900 focus-visible:ring-accent-600 shadow-sm',
         outline:
-          'border-2 border-neutral-300 bg-transparent hover:bg-neutral-50 active:bg-neutral-100 text-neutral-700 focus-visible:ring-neutral-400',
+          'border-2 border-primary-800 bg-transparent hover:bg-primary-50 active:bg-primary-100 text-primary-800 focus-visible:ring-primary-600',
         ghost:
           'hover:bg-neutral-100 active:bg-neutral-200 text-neutral-700 focus-visible:ring-neutral-400',
         destructive:

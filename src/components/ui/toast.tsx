@@ -14,48 +14,122 @@ interface ToastProps {
 
 export function Toast({ message, type, onClose, duration = 3000 }: ToastProps) {
   const [isVisible, setIsVisible] = useState(false)
+  const [isLeaving, setIsLeaving] = useState(false)
+
+  const handleClose = () => {
+    setIsLeaving(true)
+    setTimeout(onClose, 400)
+  }
 
   useEffect(() => {
-    setIsVisible(true)
+    // Enter animation
+    requestAnimationFrame(() => {
+      setIsVisible(true)
+    })
+
     const timer = setTimeout(() => {
-      setIsVisible(false)
-      setTimeout(onClose, 300)
+      handleClose()
     }, duration)
 
     return () => clearTimeout(timer)
-  }, [duration, onClose])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duration])
 
   const icons = {
-    success: <CheckCircle className="w-5 h-5 text-success-600" />,
-    error: <XCircle className="w-5 h-5 text-error-600" />,
-    info: <Info className="w-5 h-5 text-info-600" />
+    success: <CheckCircle className="w-6 h-6 text-white" />,
+    error: <XCircle className="w-6 h-6 text-white" />,
+    info: <Info className="w-6 h-6 text-white" />
   }
 
   const bgColors = {
-    success: 'bg-success-50 border-success-200',
-    error: 'bg-error-50 border-error-200',
-    info: 'bg-info-50 border-info-200'
+    success: 'bg-gradient-to-r from-green-500 to-green-600',
+    error: 'bg-gradient-to-r from-red-500 to-red-600',
+    info: 'bg-gradient-to-r from-[#0e05ad] to-blue-600'
+  }
+
+  const borderColors = {
+    success: 'border-green-400/30',
+    error: 'border-red-400/30',
+    info: 'border-[#0e05ad]/30'
   }
 
   return (
     <div
-      className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
+      className={`fixed top-20 left-1/2 -translate-x-1/2 z-9999 transition-all duration-400 ease-out ${
+        isVisible && !isLeaving 
+          ? 'opacity-100 translate-y-0 scale-100' 
+          : 'opacity-0 -translate-y-4 scale-95'
       }`}
+      style={{
+        animation: isLeaving 
+          ? 'toastExit 0.4s ease-out forwards' 
+          : 'toastEnter 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+      }}
     >
-      <div className={`${bgColors[type]} border rounded-xl p-4 shadow-lg flex items-center gap-3 min-w-[280px] max-w-[90vw]`}>
-        {icons[type]}
-        <p className="text-sm font-medium text-neutral-900 flex-1">{message}</p>
+      <div 
+        className={`
+          ${bgColors[type]} ${borderColors[type]}
+          backdrop-blur-sm border-2
+          rounded-2xl p-4 shadow-2xl 
+          flex items-center gap-3 
+          min-w-[300px] max-w-[90vw]
+          transform hover:scale-105 transition-transform duration-200
+        `}
+      >
+        <div className="shrink-0 animate-bounce-subtle">
+          {icons[type]}
+        </div>
+        <p className="text-sm font-semibold text-white flex-1 leading-relaxed">
+          {message}
+        </p>
         <button
-          onClick={() => {
-            setIsVisible(false)
-            setTimeout(onClose, 300)
-          }}
-          className="p-1 hover:bg-black/5 rounded transition-colors"
+          onClick={handleClose}
+          className="shrink-0 p-1.5 hover:bg-white/20 rounded-lg transition-all duration-200 hover:rotate-90"
+          aria-label="Tutup notifikasi"
         >
-          <X className="w-4 h-4 text-neutral-600" />
+          <X className="w-4 h-4 text-white" />
         </button>
       </div>
+
+      <style jsx>{`
+        @keyframes toastEnter {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, -20px) scale(0.9);
+          }
+          50% {
+            transform: translate(-50%, 5px) scale(1.02);
+          }
+          100% {
+            opacity: 1;
+            transform: translate(-50%, 0) scale(1);
+          }
+        }
+        
+        @keyframes toastExit {
+          0% {
+            opacity: 1;
+            transform: translate(-50%, 0) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -20px) scale(0.9);
+          }
+        }
+        
+        @keyframes bounceSuttle {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.1);
+          }
+        }
+        
+        .animate-bounce-subtle {
+          animation: bounceSuttle 0.6s ease-in-out;
+        }
+      `}</style>
     </div>
   )
 }

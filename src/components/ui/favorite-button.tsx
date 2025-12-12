@@ -57,7 +57,7 @@ export function FavoriteButton({
       <Heart 
         className={`${iconSizes[size]} transition-all ${
           favorited 
-            ? 'fill-error-500 text-error-500' 
+            ? 'fill-accent-700 text-accent-700' 
             : 'text-neutral-600'
         }`}
       />
