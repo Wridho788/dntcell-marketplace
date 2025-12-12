@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { MobileHeader } from '@/components/navigation/mobile-header'
+import { ApiConfigWarning } from '@/components/ui/api-config-warning'
 import { Search } from 'lucide-react'
 import { useCategories } from '@/lib/api/hooks/useCategories'
 import { useInfiniteProducts, useFeaturedProducts } from '@/lib/api/hooks/useProducts'
@@ -83,6 +84,9 @@ export default function HomePage() {
       />
       
       <div className="container-mobile py-6 space-y-6">
+        {/* API Configuration Warning */}
+        <ApiConfigWarning />
+        
         {/* Search Bar */}
         <div 
           onClick={() => router.push('/search')}
