@@ -100,11 +100,14 @@ export const getProducts = async (filters?: ProductFilters): Promise<Product[]> 
     if (filters?.limit) params['limit'] = filters.limit.toString()
     if (filters?.offset) params['offset'] = filters.offset.toString()
 
+    console.log('[Product Service] Fetching products with params:', params)
     const response = await axiosClient.get<SupabaseProduct[]>('/products', { params })
+    console.log('[Product Service] Products fetched:', response.data?.length || 0)
+    
     const products = Array.isArray(response.data) ? response.data : []
     return products.map(transformProduct)
   } catch (error) {
-    console.error('Failed to fetch products:', error)
+    console.error('[Product Service] Failed to fetch products:', error)
     return []
   }
 }
