@@ -4,20 +4,21 @@ import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/lib/store/auth'
 
-interface AuthGuardProps {
+interface AuthRequiredGuardProps {
   children: React.ReactNode
 }
 
 /**
+ * Auth Required Guard (Enhanced)
  * Component to protect routes that require authentication
  */
-export function AuthGuard({ children }: AuthGuardProps) {
+export function AuthRequiredGuard({ children }: AuthRequiredGuardProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { isAuthenticated, loading, isHydrated } = useAuthStore()
 
   useEffect(() => {
-    // Wait for store to hydrate
+    // Wait for store to hydrate before checking auth
     if (!isHydrated) return
 
     if (!loading && !isAuthenticated) {

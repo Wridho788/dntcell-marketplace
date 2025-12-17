@@ -1,50 +1,41 @@
 'use client'
 
-import { useEffect } from 'react'
 import { BottomNav } from '@/components/navigation/bottom-nav'
 import { QueryProvider } from './query-provider'
 import { ToastContainer, ToastProvider } from '@/components/ui/toast'
+import { AppBootstrap } from './app-bootstrap'
+import { apiClient } from '@/lib/api/api-client'
 import { useAuthStore } from '@/lib/store/auth'
-import { getMe } from '@/lib/api/auth'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const { token, setUser, setLoading, logout } = useAuthStore()
+  const router = useRouter()
+  const logout = useAuthStore((state) => state.logout)
 
   useEffect(() => {
-    // Rehydrate auth store from localStorage
-    useAuthStore.persist.rehydrate()
-  }, [])
+    // Setup API client callbacks
+    apiClient.setOnUnauthorized(() => {
+      logout()
+      router.push('/login?session=expired')
+    })
 
-  useEffect(() => {
-    // Auto-restore session on app startup
-    const restoreSession = async () => {
-      if (token) {
-        try {
-          setLoading(true)
-          const user = await getMe(token)
-          setUser(user)
-        } catch (error) {
-          console.error('Failed to restore session:', error)
-          // Clear invalid session
-          logout()
-        } finally {
-          setLoading(false)
-        }
-      }
-    }
-
-    restoreSession()
-  }, [token, setUser, setLoading, logout])
+    apiClient.setOnForbidden(() => {
+      router.push('/forbidden')
+    })
+  }, [logout, router])
 
   return (
     <ToastProvider>
       <QueryProvider>
-        <main className="pb-20 min-h-screen bg-neutral-50">
-          {children}
-        </main>
-        
-        <BottomNav />
-        <ToastContainer />
+        <AppBootstrap>
+          <main className="pb-20 min-h-screen bg-neutral-50">
+            {children}
+          </main>
+          
+          <BottomNav />
+          <ToastContainer />
+        </AppBootstrap>
       </QueryProvider>
     </ToastProvider>
   )

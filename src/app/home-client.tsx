@@ -7,6 +7,7 @@ import { Search } from 'lucide-react'
 import { MobileHeader } from '@/components/navigation/mobile-header'
 import { CategoryCard } from '@/components/category/category-card'
 import { ProductSection } from '@/components/home/product-section'
+import { useProducts } from '@/hooks/useProducts'
 import type { Product } from '@/services/product.service'
 import type { Category } from '@/services/category.service'
 
@@ -26,11 +27,25 @@ export function HomePageClient({
   const [categories] = useState(initialCategories || [])
   const [featuredProducts] = useState(initialFeaturedProducts || [])
 
+  // Call useProducts hook
+  const { data: productsData, isLoading, error, isError } = useProducts()
+
   useEffect(() => {
     // Debug log to verify data
     console.log('Home Client - Products loaded:', products.length)
     console.log('Home Client - Categories loaded:', categories.length)
   }, [products, categories])
+
+  useEffect(() => {
+    // Console log for useProducts hook response
+    console.log('=== useProducts Hook Response ===')
+    console.log('Data:', productsData)
+    console.log('IsLoading:', isLoading)
+    console.log('IsError:', isError)
+    console.log('Error:', error)
+    console.log('Products Count:', productsData?.length || 0)
+    console.log('================================')
+  }, [productsData, isLoading, isError, error])
 
   return (
     <>
