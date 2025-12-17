@@ -87,15 +87,41 @@ export const getOrderStatusLogs = async (orderId: string): Promise<OrderStatusLo
  * Create new order
  */
 export const createOrder = async (payload: CreateOrderPayload): Promise<Order> => {
-  const response = await axiosClient.post<Order>('/orders', payload)
+  const response = await axiosClient.post<Order>('/orders', payload, {
+    headers: {
+      'Prefer': 'return=representation'
+    }
+  })
   return response.data
 }
 
 /**
- * Update order status (user can only cancel)
+ * Cancel order (user can only cancel pending orders)
  */
-export const updateOrderStatus = async (id: string, status: 'cancelled'): Promise<Order> => {
-  const response = await axiosClient.patch<Order>(`/orders/${id}/status`, { status })
+export const cancelOrder = async (id: string): Promise<Order> => {
+  const response = await axiosClient.patch<Order>(`/orders?id=eq.${id}`, 
+    { status: 'cancelled' },
+    {
+      headers: {
+        'Prefer': 'return=representation'
+      }
+    }
+  )
+  return response.data
+}
+
+/**
+ * Update order status (admin only - but included for completeness)
+ */
+export const updateOrderStatus = async (id: string, status: Order['status']): Promise<Order> => {
+  const response = await axiosClient.patch<Order>(`/orders?id=eq.${id}`, 
+    { status },
+    {
+      headers: {
+        'Prefer': 'return=representation'
+      }
+    }
+  )
   return response.data
 }
 
@@ -104,6 +130,7 @@ const orderService = {
   getOrderById,
   getOrderStatusLogs,
   createOrder,
+  cancelOrder,
   updateOrderStatus,
 }
 

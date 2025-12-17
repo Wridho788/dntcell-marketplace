@@ -11,7 +11,6 @@ import { LoadingState } from '@/components/ui/loading-state'
 import { ErrorState } from '@/components/ui/error-state'
 import { NegotiationStatusBadge, getStatusConfig } from '@/components/negotiation/negotiation-status-badge'
 import { getNegotiationDetail } from '@/services/negotiation.service'
-import { createOrder } from '@/services/order.service'
 import { formatCurrency } from '@/lib/utils/format'
 import { formatDate } from '@/lib/utils/date'
 import { logUserAction } from '@/lib/utils/logger'
@@ -34,7 +33,6 @@ export function NegotiationDetailClient({ negotiationId }: NegotiationDetailClie
   const [negotiation, setNegotiation] = useState<Negotiation | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isCreatingOrder, setIsCreatingOrder] = useState(false)
 
   const loadNegotiation = async () => {
     try {
@@ -63,36 +61,13 @@ export function NegotiationDetailClient({ negotiationId }: NegotiationDetailClie
   const handleContinueToPurchase = async () => {
     if (!negotiation || !negotiation.final_price) return
 
-    try {
-      setIsCreatingOrder(true)
+    logUserAction('nego_approved_purchase_clicked', {
+      negotiation_id: negotiation.id,
+      final_price: negotiation.final_price
+    })
 
-      logUserAction('nego_approved_purchase_clicked', {
-        negotiation_id: negotiation.id,
-        final_price: negotiation.final_price
-      })
-
-      // Create order with negotiation data
-      const order = await createOrder({
-        product_id: negotiation.product_id,
-        negotiation_id: negotiation.id,
-        final_price: negotiation.final_price,
-        notes: `Order dari negosiasi #${negotiation.id}`
-      })
-
-      logUserAction('order_created_from_negotiation', {
-        negotiation_id: negotiation.id,
-        order_id: order.id,
-        final_price: negotiation.final_price
-      })
-
-      // Navigate to order detail or orders list
-      router.push(`/profile/orders`)
-    } catch (err) {
-      console.error('Failed to create order:', err)
-      alert('Gagal membuat pesanan. Silakan coba lagi.')
-    } finally {
-      setIsCreatingOrder(false)
-    }
+    // Navigate to checkout with negotiation ID
+    router.push(`/checkout?product_id=${negotiation.product_id}&negotiation_id=${negotiation.id}`)
   }
 
   const handleCreateNewNegotiation = () => {
@@ -334,10 +309,9 @@ export function NegotiationDetailClient({ negotiationId }: NegotiationDetailClie
                 size="lg"
                 className="w-full"
                 onClick={handleContinueToPurchase}
-                disabled={isCreatingOrder}
               >
                 <ShoppingBag className="w-5 h-5 mr-2" />
-                {isCreatingOrder ? 'Membuat Pesanan...' : 'Lanjutkan Pembelian'}
+                Lanjutkan Pembelian
               </Button>
             ) : negotiation.status === 'rejected' ? (
               <Button

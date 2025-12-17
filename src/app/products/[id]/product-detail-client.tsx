@@ -112,6 +112,10 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         alert('Anda tidak bisa membeli produk sendiri')
         return
       }
+      if (!isAvailable) {
+        alert('Produk tidak tersedia untuk dibeli saat ini')
+        return
+      }
       
       logUserAction('buy_now_cta_clicked', { 
         product_id: product.id, 
@@ -119,8 +123,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         price: product.price 
       })
       
-      // TODO: Navigate to checkout or order creation
-      console.log('Buy now for product:', product.id)
+      // Navigate to checkout
+      router.push(`/checkout?product_id=${product.id}`)
     })
   }
 
