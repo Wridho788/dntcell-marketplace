@@ -233,7 +233,7 @@ export function CheckoutClient() {
           </div>
           
           <div className="flex gap-3">
-            <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-neutral-200">
+            <div className="relative w-20 h-20 shrink-0 rounded-lg overflow-hidden border border-neutral-200">
               <Image
                 src={product.images[0] || '/images/placeholder.png'}
                 alt={product.name}
@@ -281,7 +281,7 @@ export function CheckoutClient() {
 
           {negotiation && (
             <div className="mt-3 p-2 bg-success-50 rounded-lg flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-success-600 flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-4 h-4 text-success-600 shrink-0 mt-0.5" />
               <p className="text-xs text-success-700">
                 Harga hasil negosiasi yang telah disetujui
               </p>
@@ -439,7 +439,7 @@ export function CheckoutClient() {
           </div>
 
           <div className="mt-3 p-3 bg-warning-50 rounded-lg flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-warning-600 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-4 h-4 text-warning-600 shrink-0 mt-0.5" />
             <p className="text-xs text-warning-700">
               Pembayaran akan dikonfirmasi oleh admin. Anda akan menerima notifikasi setelah pembayaran diverifikasi.
             </p>

@@ -156,13 +156,13 @@ export function OrdersListClient() {
                     </p>
                     <OrderStatusBadge status={order.status} size="sm" />
                   </div>
-                  <ArrowRight className="w-5 h-5 text-neutral-400 flex-shrink-0" />
+                  <ArrowRight className="w-5 h-5 text-neutral-400 shrink-0" />
                 </div>
 
                 {/* Product Info */}
                 {order.product ? (
                   <div className="flex gap-3 mb-3">
-                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border border-neutral-200">
+                    <div className="relative w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-neutral-200">
                       <Image
                         src={order.product.image || '/images/placeholder.png'}
                         alt={order.product.name}

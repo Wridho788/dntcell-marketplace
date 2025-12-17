@@ -180,7 +180,7 @@ export function NotificationsClient() {
                 }`}
               >
                 <div className="flex gap-3">
-                  <div className="flex-shrink-0 mt-0.5">
+                  <div className="shrink-0 mt-0.5">
                     {getNotificationIcon(notification.type)}
                   </div>
                   
@@ -190,7 +190,7 @@ export function NotificationsClient() {
                         {notification.title}
                       </h3>
                       {!notification.is_read && (
-                        <span className="w-2 h-2 bg-primary-600 rounded-full flex-shrink-0 mt-1.5" />
+                        <span className="w-2 h-2 bg-primary-600 rounded-full shrink-0 mt-1.5" />
                       )}
                     </div>
                     

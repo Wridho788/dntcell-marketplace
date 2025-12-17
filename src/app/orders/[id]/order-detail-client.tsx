@@ -151,7 +151,7 @@ export function OrderDetailClient({ orderId }: OrderDetailClientProps) {
 
           {order.status === 'pending' && (
             <div className="mt-3 p-3 bg-warning-50 rounded-lg flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-warning-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-4 h-4 text-warning-600 shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="text-xs font-medium text-warning-700">
                   Menunggu Konfirmasi Admin
@@ -165,7 +165,7 @@ export function OrderDetailClient({ orderId }: OrderDetailClientProps) {
 
           {order.status === 'confirmed' && (
             <div className="mt-3 p-3 bg-info-50 rounded-lg flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-info-600 flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-4 h-4 text-info-600 shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="text-xs font-medium text-info-700">
                   Apa yang terjadi selanjutnya?
@@ -190,7 +190,7 @@ export function OrderDetailClient({ orderId }: OrderDetailClientProps) {
               href={`/products/${order.product.id}`}
               className="flex gap-3 hover:bg-neutral-50 -m-2 p-2 rounded-lg transition-colors"
             >
-              <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border border-neutral-200">
+              <div className="relative w-20 h-20 shrink-0 rounded-lg overflow-hidden border border-neutral-200">
                 <Image
                   src={order.product.image || '/images/placeholder.png'}
                   alt={order.product.name}
