@@ -4,30 +4,32 @@ import { MobileHeader } from '@/components/navigation/mobile-header'
 import { Button } from '@/components/ui/button'
 import { FavoriteButton } from '@/components/ui/favorite-button'
 import { PriceTag } from '@/components/ui/price-tag'
-import { ImageCarousel } from '@/components/product/image-carousel'
+import { ImageGallery } from '@/components/product/image-gallery'
 import { useRequireAuth } from '@/lib/hooks/useAuth'
+import { useAuthStore } from '@/lib/store/auth'
+import { logUserAction } from '@/lib/utils/logger'
 import type { Product } from '@/services/product.service'
 import { 
   MapPin, 
   MessageCircle, 
   Share2,
   ShieldCheck,
-  Smartphone
+  Smartphone,
+  Info,
+  TrendingDown,
+  AlertCircle,
+  CheckCircle2,
+  HandshakeIcon
 } from 'lucide-react'
-
-const CONDITION_LABELS: Record<string, string> = {
-  'new': 'Baru',
-  'like-new': 'Seperti Baru',
-  'good': 'Baik',
-  'fair': 'Cukup Baik'
-}
-
-const CONDITION_COLORS: Record<string, string> = {
-  'new': 'bg-success-100 text-success-700',
-  'like-new': 'bg-info-100 text-info-700',
-  'good': 'bg-warning-100 text-warning-700',
-  'fair': 'bg-neutral-100 text-neutral-700'
-}
+import { 
+  CONDITION_CONFIG, 
+  isProductAvailable, 
+  isProductNegotiable,
+  getConditionBadge,
+  getStatusBadge
+} from '@/lib/utils/product'
+import { formatDiscount } from '@/lib/utils/format'
+import { useState } from 'react'
 
 interface ProductDetailClientProps {
   product: Product
@@ -35,16 +37,78 @@ interface ProductDetailClientProps {
 
 export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const { requireAuth } = useRequireAuth()
+  const { user } = useAuthStore()
+  const [showConditionInfo, setShowConditionInfo] = useState(false)
+
+  const isAvailable = isProductAvailable(product)
+  const canNegotiate = isProductNegotiable(product)
+  const isOwnProduct = user?.id === product.seller_id
+  const conditionInfo = CONDITION_CONFIG[product.condition]
+  const statusBadge = getStatusBadge(product.status)
+  const conditionBadge = getConditionBadge(product.condition)
+  
+  // Calculate discount if exists
+  const discount = product.original_price && product.original_price > product.price
+    ? formatDiscount(product.original_price, product.price)
+    : null
+
+  // Track page view on mount
+  useState(() => {
+    logUserAction('product_viewed', { product_id: product.id, product_name: product.name })
+  })
 
   const handleNegotiate = () => {
     requireAuth(() => {
+      if (isOwnProduct) {
+        alert('Anda tidak bisa melakukan negosiasi pada produk sendiri')
+        return
+      }
+      if (!canNegotiate) {
+        alert('Produk ini tidak dapat dinegosiasikan')
+        return
+      }
+      
+      logUserAction('negotiation_cta_clicked', { 
+        product_id: product.id, 
+        product_name: product.name,
+        current_price: product.price 
+      })
+      
       // TODO: Open negotiation modal or navigate to negotiation page
       console.log('Start negotiation for product:', product.id)
     })
   }
 
+  const handleBuyNow = () => {
+    requireAuth(() => {
+      if (isOwnProduct) {
+        alert('Anda tidak bisa membeli produk sendiri')
+        return
+      }
+      
+      logUserAction('buy_now_cta_clicked', { 
+        product_id: product.id, 
+        product_name: product.name,
+        price: product.price 
+      })
+      
+      // TODO: Navigate to checkout or order creation
+      console.log('Buy now for product:', product.id)
+    })
+  }
+
   const handleChat = () => {
     requireAuth(() => {
+      if (isOwnProduct) {
+        alert('Anda tidak bisa chat dengan diri sendiri')
+        return
+      }
+      
+      logUserAction('chat_seller_clicked', { 
+        product_id: product.id,
+        seller_id: product.seller_id 
+      })
+      
       // TODO: Open chat with seller
       console.log('Chat with seller for product:', product.id)
     })
@@ -52,6 +116,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
   const handleShare = async () => {
     const url = `${window.location.origin}/products/${product.id}`
+    
+    logUserAction('product_shared', { product_id: product.id })
     
     if (navigator.share) {
       try {
@@ -69,8 +135,6 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       alert('Link produk disalin ke clipboard!')
     }
   }
-
-  const isAvailable = product.status === 'available'
 
   return (
     <>
@@ -92,46 +156,109 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       />
 
       <main className="container-mobile py-6 space-y-6 pb-24">
-        {/* Image Carousel */}
-        <ImageCarousel images={product.images} productName={product.name} />
+        {/* Image Gallery */}
+        <ImageGallery images={product.images} productName={product.name} />
 
         {/* Product Info */}
         <article className="space-y-4">
-          {/* Price & Title */}
-          <header>
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <h1 className="text-xl font-bold text-neutral-900 flex-1 leading-[1.4]">
+          {/* Price & Title with Sticky Behavior */}
+          <header className="sticky top-0 bg-white z-10 -mx-4 px-4 py-3 border-b border-neutral-100">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <h1 className="text-xl font-bold text-neutral-900 flex-1 leading-tight">
                 {product.name}
               </h1>
-              {product.status === 'sold' && (
-                <span className="px-3 py-1 bg-error-100 text-error-700 text-xs font-semibold rounded-lg shrink-0">
-                  TERJUAL
+              <span className={`px-3 py-1 text-xs font-semibold rounded-lg shrink-0 ${statusBadge.color}`}>
+                {statusBadge.label}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2 flex-wrap">
+              <PriceTag 
+                price={product.price}
+                originalPrice={product.original_price}
+                size="lg"
+              />
+              {discount && (
+                <span className="px-2 py-1 bg-error-100 text-error-700 text-xs font-bold rounded">
+                  {discount} OFF
                 </span>
               )}
             </div>
             
-            <PriceTag 
-              price={product.price}
-              originalPrice={product.original_price}
-              size="lg"
-            />
+            {/* Stock Warning */}
+            {isAvailable && product.stock && product.stock <= 5 && (
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-warning-700">
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span>Stok terbatas! Tersisa {product.stock} unit</span>
+              </div>
+            )}
           </header>
 
-          {/* Condition Badge */}
-          <div className="flex gap-2">
-            <span className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${CONDITION_COLORS[product.condition]}`}>
-              <ShieldCheck className="w-3.5 h-3.5 inline mr-1" />
-              Kondisi: {CONDITION_LABELS[product.condition]}
+          {/* Condition Badge with Info */}
+          <div className="flex gap-2 items-center flex-wrap">
+            <span className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${conditionBadge.bg} ${conditionBadge.text} flex items-center gap-1.5`}>
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Kondisi: {conditionBadge.label}
             </span>
+            <button
+              onClick={() => setShowConditionInfo(!showConditionInfo)}
+              className="p-1 hover:bg-neutral-100 rounded transition-colors"
+              aria-label="Info kondisi"
+            >
+              <Info className="w-4 h-4 text-neutral-500" />
+            </button>
+          </div>
+
+          {/* Condition Info Panel */}
+          {showConditionInfo && (
+            <div className="bg-info-50 border border-info-200 rounded-xl p-4">
+              <h3 className="font-semibold text-info-900 mb-2 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4" />
+                Tentang Kondisi &ldquo;{conditionInfo.label}&rdquo;
+              </h3>
+              <p className="text-sm text-info-800 leading-relaxed">
+                {conditionInfo.description}
+              </p>
+            </div>
+          )}
+
+          {/* Negotiation Hint */}
+          {canNegotiate && product.min_negotiable_price && (
+            <div className="bg-success-50 border border-success-200 rounded-xl p-4 flex gap-3">
+              <TrendingDown className="w-5 h-5 text-success-600 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-success-900 mb-1">
+                  Bisa Nego!
+                </h3>
+                <p className="text-sm text-success-800">
+                  Penjual menerima penawaran mulai dari{' '}
+                  <span className="font-bold">
+                    Rp {product.min_negotiable_price.toLocaleString('id-ID')}
+                  </span>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Trust Signals */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-neutral-50 rounded-lg p-3 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-success-600" />
+              <span className="text-xs text-neutral-700">100% Original</span>
+            </div>
+            <div className="bg-neutral-50 rounded-lg p-3 flex items-center gap-2">
+              <HandshakeIcon className="w-4 h-4 text-primary-600" />
+              <span className="text-xs text-neutral-700">Garansi Toko</span>
+            </div>
           </div>
 
           {/* Description */}
           {product.description && (
             <section className="bg-neutral-50 rounded-xl p-4">
-              <h2 className="font-semibold text-neutral-900 mb-2 text-base leading-[1.4]">
+              <h2 className="font-semibold text-neutral-900 mb-2">
                 Deskripsi
               </h2>
-              <p className="text-sm text-neutral-700 whitespace-pre-wrap leading-[1.6]">
+              <p className="text-sm text-neutral-700 whitespace-pre-wrap leading-relaxed">
                 {product.description}
               </p>
             </section>
@@ -140,15 +267,15 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           {/* Specifications */}
           {product.specifications && Object.keys(product.specifications).length > 0 && (
             <section className="bg-neutral-50 rounded-xl p-4">
-              <h2 className="font-semibold text-neutral-900 mb-3 flex items-center gap-2 text-base leading-[1.4]">
+              <h2 className="font-semibold text-neutral-900 mb-3 flex items-center gap-2">
                 <Smartphone className="w-4 h-4" />
                 Spesifikasi
               </h2>
               <dl className="space-y-2.5">
                 {Object.entries(product.specifications).map(([key, value]) => (
                   <div key={key} className="flex justify-between text-sm gap-4">
-                    <dt className="text-neutral-600 leading-[1.4]">{key}</dt>
-                    <dd className="text-neutral-900 font-medium text-right leading-[1.4]">
+                    <dt className="text-neutral-600">{key}</dt>
+                    <dd className="text-neutral-900 font-medium text-right">
                       {String(value)}
                     </dd>
                   </div>
@@ -159,7 +286,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
           {/* Seller Info Placeholder */}
           <section className="bg-white rounded-xl p-4 border border-neutral-200">
-            <h2 className="font-semibold text-neutral-900 mb-3 text-base leading-[1.4]">
+            <h2 className="font-semibold text-neutral-900 mb-3">
               Penjual
             </h2>
             <div className="flex items-center gap-3">
@@ -167,8 +294,11 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                 <span className="text-primary-600 font-bold text-lg">D</span>
               </div>
               <div className="flex-1">
-                <p className="font-medium text-neutral-900 leading-[1.4]">DNTCell Store</p>
-                <div className="flex items-center gap-1 text-xs text-neutral-500 mt-0.5 leading-[1.4]">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-neutral-900">DNTCell Store</p>
+                  <ShieldCheck className="w-4 h-4 text-success-600" aria-label="Verified Seller" />
+                </div>
+                <div className="flex items-center gap-1 text-xs text-neutral-500 mt-0.5">
                   <MapPin className="w-3 h-3" />
                   <span>Jakarta Selatan</span>
                 </div>
@@ -178,27 +308,59 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         </article>
       </main>
 
-      {/* Bottom Action Bar */}
+      {/* Bottom Action Bar with Smart CTAs */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 p-4 safe-area-bottom z-40">
-        <div className="container-mobile flex gap-3">
-          <Button
-            variant="outline"
-            size="lg"
-            className="flex-1"
-            disabled={!isAvailable}
-            onClick={handleChat}
-          >
-            <MessageCircle className="w-5 h-5 mr-2" />
-            Chat Penjual
-          </Button>
-          <Button
-            size="lg"
-            className="flex-1"
-            disabled={!isAvailable}
-            onClick={handleNegotiate}
-          >
-            Nego Harga
-          </Button>
+        <div className="container-mobile">
+          {isOwnProduct ? (
+            <div className="text-center py-2">
+              <p className="text-sm text-neutral-500">Ini adalah produk Anda</p>
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                size="lg"
+                className="shrink-0"
+                disabled={!isAvailable}
+                onClick={handleChat}
+                title={!isAvailable ? 'Produk tidak tersedia' : 'Chat dengan penjual'}
+              >
+                <MessageCircle className="w-5 h-5" />
+              </Button>
+              
+              {canNegotiate ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="flex-1"
+                    disabled={!isAvailable}
+                    onClick={handleBuyNow}
+                  >
+                    Beli Sekarang
+                  </Button>
+                  <Button
+                    size="lg"
+                    className="flex-1"
+                    disabled={!isAvailable}
+                    onClick={handleNegotiate}
+                  >
+                    <TrendingDown className="w-4 h-4 mr-2" />
+                    Ajukan Nego
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  size="lg"
+                  className="flex-1"
+                  disabled={!isAvailable}
+                  onClick={handleBuyNow}
+                >
+                  Beli Sekarang
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </>

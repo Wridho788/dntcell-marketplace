@@ -5,6 +5,7 @@ import { PageTransition } from '@/components/ui/page-transition'
 import { OneSignalWrapper } from '@/components/onesignal/onesignal-wrapper'
 import { SplashScreen } from '@/components/ui/splash-screen'
 import { PWAInstallPrompt } from '@/components/ui/pwa-install-prompt'
+import { NetworkStatusIndicator } from '@/components/ui/network-status'
 import "./globals.css"
 
 // Force dynamic rendering for all pages
@@ -57,6 +58,9 @@ export default function RootLayout({
         
         {/* PWA Install Prompt */}
         <PWAInstallPrompt />
+        
+        {/* Network Status Indicator */}
+        <NetworkStatusIndicator />
         
         <AppProvider>
           {/* OneSignal Push Notifications */}

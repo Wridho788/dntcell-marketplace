@@ -1,14 +1,13 @@
 import { notFound } from 'next/navigation'
 import Script from 'next/script'
+import type { Metadata } from 'next'
 import { generateMetadata as genMeta, generateProductSchema, generateBreadcrumbSchema, truncateText } from '@/lib/seo'
 import { getProductById } from '@/services/product.service'
 import { ProductDetailClient } from './product-detail-client'
+import { CONDITION_CONFIG } from '@/lib/utils/product'
 
 // ISR: Revalidate every 2 minutes
 export const revalidate = 120
-
-// Force dynamic to prevent hydration issues
-export const dynamic = 'force-dynamic'
 
 // Generate static params for popular products (can be expanded)
 export async function generateStaticParams() {
@@ -18,7 +17,7 @@ export async function generateStaticParams() {
 }
 
 // Metadata for SEO
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   try {
     const product = await getProductById(params.id)
     
@@ -30,14 +29,26 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
       })
     }
 
+    const conditionLabel = CONDITION_CONFIG[product.condition]?.label || product.condition
+    const priceFormatted = `Rp ${product.price.toLocaleString('id-ID')}`
+    
     const description = product.description 
       ? truncateText(product.description, 160)
-      : `${product.name} - ${CONDITION_LABELS[product.condition]} - Rp ${product.price.toLocaleString('id-ID')}`
+      : `${product.name} - Kondisi ${conditionLabel} - ${priceFormatted}. ${product.negotiable ? 'Harga bisa nego!' : 'Harga pas.'} Beli sekarang di DNTCell Marketplace.`
+
+    const keywords = [
+      product.name,
+      conditionLabel,
+      'hp bekas',
+      'laptop second',
+      'smartphone murah',
+      'gadget second',
+    ].filter(Boolean).join(', ')
 
     return genMeta({
-      title: product.name,
+      title: `${product.name} - ${conditionLabel} - ${priceFormatted}`,
       description,
-      keywords: `${product.name}, ${CONDITION_LABELS[product.condition]}, hp bekas, laptop second`,
+      keywords,
       image: product.images[0],
       url: `/products/${product.id}`,
       type: 'product',
@@ -50,13 +61,6 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
       noIndex: true,
     })
   }
-}
-
-const CONDITION_LABELS: Record<string, string> = {
-  'new': 'Baru',
-  'like-new': 'Seperti Baru',
-  'good': 'Baik',
-  'fair': 'Cukup Baik'
 }
 
 interface ProductDetailProps {

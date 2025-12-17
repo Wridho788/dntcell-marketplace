@@ -33,6 +33,10 @@ export interface Product {
   specifications?: Record<string, unknown>
   images: string[]
   category_id: string
+  seller_id?: string
+  negotiable?: boolean
+  min_negotiable_price?: number
+  stock?: number
   created_at: string
   updated_at: string
 }

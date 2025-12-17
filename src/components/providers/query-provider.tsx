@@ -9,11 +9,19 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 5 * 60 * 1000, // 5 minutes
-            gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-            refetchOnWindowFocus: false,
+            // Product Discovery & Trust UX Cache Strategy
+            staleTime: 2 * 60 * 1000, // 2 minutes - Product data refreshes reasonably fast
+            gcTime: 10 * 60 * 1000, // 10 minutes - Keep data in cache longer
+            refetchOnWindowFocus: true, // Refetch when user returns to tab
+            refetchOnReconnect: true, // Refetch when connection restored
+            retry: 2, // Retry failed requests twice
+            retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+            refetchOnMount: 'always', // Always refetch on component mount for fresh data
+          },
+          mutations: {
+            // Mutation defaults
             retry: 1,
-            refetchOnMount: false,
+            retryDelay: 1000,
           },
         },
       })
@@ -25,8 +33,18 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       queryClient.clear()
     }
 
+    // Listen for manual refresh event
+    const handleRefresh = () => {
+      queryClient.invalidateQueries()
+    }
+
     window.addEventListener('auth-logout', handleLogout)
-    return () => window.removeEventListener('auth-logout', handleLogout)
+    window.addEventListener('app-refresh', handleRefresh)
+    
+    return () => {
+      window.removeEventListener('auth-logout', handleLogout)
+      window.removeEventListener('app-refresh', handleRefresh)
+    }
   }, [queryClient])
 
   return (
