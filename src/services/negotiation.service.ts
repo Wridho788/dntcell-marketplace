@@ -1,35 +1,41 @@
 import axiosClient from '@/libs/axios/axiosClient'
 
+export type NegotiationStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'used'
+
 export interface Negotiation {
   id: string
   product_id: string
   buyer_id: string
   seller_id: string
-  initial_price: number
   offered_price: number
-  current_price: number
-  status: 'pending' | 'counter' | 'accepted' | 'rejected' | 'cancelled'
-  buyer_message?: string
-  seller_message?: string
+  final_price?: number
+  status: NegotiationStatus
+  buyer_note?: string
+  admin_note?: string
+  rejection_reason?: string
+  used: boolean
+  expires_at?: string
   created_at: string
   updated_at: string
   product?: {
     id: string
     name: string
-    image: string
+    selling_price: number
+    main_image_url?: string
+    status: string
   }
 }
 
 export interface CreateNegotiationPayload {
   product_id: string
   offered_price: number
-  message?: string
+  buyer_note?: string
 }
 
-export interface UpdateNegotiationPayload {
-  offered_price?: number
-  status?: 'counter' | 'accepted' | 'rejected' | 'cancelled'
-  message?: string
+export interface NegotiationEligibility {
+  eligible: boolean
+  reason?: string
+  existing_negotiation_id?: string
 }
 
 /**
@@ -37,13 +43,17 @@ export interface UpdateNegotiationPayload {
  * Supabase PostgREST format: /negotiations?select=*&order=created_at.desc
  * Note: User filtering handled by RLS (Row Level Security)
  */
-export const getNegotiationsByUser = async (): Promise<Negotiation[]> => {
-  const response = await axiosClient.get<Negotiation[]>('/negotiations', {
-    params: {
-      select: '*,product:products(*)',
-      order: 'created_at.desc'
-    }
-  })
+export const getNegotiationsByUser = async (status?: NegotiationStatus): Promise<Negotiation[]> => {
+  const params: Record<string, string> = {
+    select: '*,product:products(id,name,selling_price,main_image_url,status)',
+    order: 'created_at.desc'
+  }
+  
+  if (status) {
+    params.status = `eq.${status}`
+  }
+  
+  const response = await axiosClient.get<Negotiation[]>('/negotiations', { params })
   return response.data
 }
 
@@ -55,42 +65,72 @@ export const getNegotiationDetail = async (id: string): Promise<Negotiation> => 
   const response = await axiosClient.get<Negotiation[]>('/negotiations', {
     params: {
       id: `eq.${id}`,
-      select: '*,product:products(*)',
+      select: '*,product:products(id,name,selling_price,main_image_url,status)',
       limit: 1
     }
   })
+  
+  if (!response.data || response.data.length === 0) {
+    throw new Error('Negotiation not found')
+  }
+  
   return response.data[0]
+}
+
+/**
+ * Check if user is eligible to create negotiation for a product
+ */
+export const checkNegotiationEligibility = async (productId: string): Promise<NegotiationEligibility> => {
+  try {
+    const response = await axiosClient.get<Negotiation[]>('/negotiations', {
+      params: {
+        product_id: `eq.${productId}`,
+        status: `in.(pending,approved)`,
+        select: 'id,status'
+      }
+    })
+    
+    if (response.data && response.data.length > 0) {
+      return {
+        eligible: false,
+        reason: 'Anda sudah memiliki negosiasi aktif untuk produk ini',
+        existing_negotiation_id: response.data[0].id
+      }
+    }
+    
+    return { eligible: true }
+  } catch {
+    return { eligible: true }
+  }
 }
 
 /**
  * Create new negotiation
  */
 export const createNegotiation = async (payload: CreateNegotiationPayload): Promise<Negotiation> => {
-  const response = await axiosClient.post<Negotiation>('/negotiations', payload)
+  const response = await axiosClient.post<Negotiation>('/negotiations', payload, {
+    headers: {
+      'Prefer': 'return=representation'
+    }
+  })
   return response.data
 }
 
 /**
- * Update negotiation (counter offer, accept, reject, cancel)
+ * Cancel negotiation (buyer only)
  */
-export const updateNegotiation = async (id: string, payload: UpdateNegotiationPayload): Promise<Negotiation> => {
-  const response = await axiosClient.patch<Negotiation>(`/negotiations/${id}`, payload)
-  return response.data
-}
-
-/**
- * Cancel negotiation
- */
-export const cancelNegotiation = async (id: string): Promise<Negotiation> => {
-  const response = await axiosClient.patch<Negotiation>(`/negotiations/${id}/cancel`)
-  return response.data
+export const cancelNegotiation = async (id: string): Promise<void> => {
+  await axiosClient.patch(`/negotiations?id=eq.${id}`, {
+    status: 'rejected',
+    rejection_reason: 'Dibatalkan oleh pembeli'
+  })
 }
 
 const negotiationService = {
   getNegotiationsByUser,
   getNegotiationDetail,
+  checkNegotiationEligibility,
   createNegotiation,
-  updateNegotiation,
   cancelNegotiation,
 }
 

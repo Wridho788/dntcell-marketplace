@@ -1,6 +1,6 @@
 export type { Product, ProductImage, ProductFilters } from '@/services/product.service'
 export type { Category } from '@/services/category.service'
-export type { Negotiation, CreateNegotiationPayload, UpdateNegotiationPayload } from '@/services/negotiation.service'
+export type { Negotiation, CreateNegotiationPayload, NegotiationStatus, NegotiationEligibility } from '@/services/negotiation.service'
 export type { Order, OrderStatusLog, CreateOrderPayload } from '@/services/order.service'
 export type { Notification } from '@/services/notification.service'
 export type { Profile, UpdateProfilePayload } from '@/services/profile.service'

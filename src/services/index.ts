@@ -23,8 +23,9 @@ export type { Category } from './category.service'
 
 export type { 
   Negotiation, 
-  CreateNegotiationPayload, 
-  UpdateNegotiationPayload 
+  CreateNegotiationPayload,
+  NegotiationStatus,
+  NegotiationEligibility
 } from './negotiation.service'
 
 export type { 

@@ -1,17 +1,17 @@
 import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query'
 import negotiationService, { 
   Negotiation, 
-  CreateNegotiationPayload, 
-  UpdateNegotiationPayload 
+  CreateNegotiationPayload,
+  NegotiationStatus
 } from '@/services/negotiation.service'
 
 /**
  * Get all negotiations for current user
  */
-export function useNegotiations(options?: UseQueryOptions<Negotiation[], Error>) {
+export function useNegotiations(status?: NegotiationStatus, options?: UseQueryOptions<Negotiation[], Error>) {
   return useQuery<Negotiation[], Error>({
-    queryKey: ['negotiations'],
-    queryFn: negotiationService.getNegotiationsByUser,
+    queryKey: ['negotiations', status],
+    queryFn: () => negotiationService.getNegotiationsByUser(status),
     staleTime: 2 * 60 * 1000, // 2 minutes
     ...options,
   })
@@ -47,33 +47,15 @@ export function useCreateNegotiation(options?: UseMutationOptions<Negotiation, E
 }
 
 /**
- * Update negotiation (counter offer, accept, reject)
+ * Cancel negotiation (buyer only)
  */
-export function useUpdateNegotiation(options?: UseMutationOptions<Negotiation, Error, { id: string; payload: UpdateNegotiationPayload }>) {
+export function useCancelNegotiation(options?: UseMutationOptions<void, Error, string>) {
   const queryClient = useQueryClient()
 
-  return useMutation<Negotiation, Error, { id: string; payload: UpdateNegotiationPayload }>({
-    mutationFn: ({ id, payload }) => negotiationService.updateNegotiation(id, payload),
-    onSuccess: (_, variables) => {
-      // Invalidate specific negotiation and list
-      queryClient.invalidateQueries({ queryKey: ['negotiation', variables.id] })
-      queryClient.invalidateQueries({ queryKey: ['negotiations'] })
-    },
-    ...options,
-  })
-}
-
-/**
- * Cancel negotiation
- */
-export function useCancelNegotiation(options?: UseMutationOptions<Negotiation, Error, string>) {
-  const queryClient = useQueryClient()
-
-  return useMutation<Negotiation, Error, string>({
+  return useMutation<void, Error, string>({
     mutationFn: negotiationService.cancelNegotiation,
-    onSuccess: (_, id) => {
-      // Invalidate specific negotiation and list
-      queryClient.invalidateQueries({ queryKey: ['negotiation', id] })
+    onSuccess: () => {
+      // Invalidate negotiations list
       queryClient.invalidateQueries({ queryKey: ['negotiations'] })
     },
     ...options,

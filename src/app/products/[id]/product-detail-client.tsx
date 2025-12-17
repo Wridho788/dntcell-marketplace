@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button'
 import { FavoriteButton } from '@/components/ui/favorite-button'
 import { PriceTag } from '@/components/ui/price-tag'
 import { ImageGallery } from '@/components/product/image-gallery'
+import { NegotiationModal } from '@/components/negotiation/negotiation-modal'
 import { useRequireAuth } from '@/lib/hooks/useAuth'
 import { useAuthStore } from '@/lib/store/auth'
 import { logUserAction } from '@/lib/utils/logger'
+import { checkNegotiationEligibility } from '@/services/negotiation.service'
 import type { Product } from '@/services/product.service'
 import { 
   MapPin, 
@@ -29,7 +31,8 @@ import {
   getStatusBadge
 } from '@/lib/utils/product'
 import { formatDiscount } from '@/lib/utils/format'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface ProductDetailClientProps {
   product: Product
@@ -38,7 +41,10 @@ interface ProductDetailClientProps {
 export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const { requireAuth } = useRequireAuth()
   const { user } = useAuthStore()
+  const router = useRouter()
   const [showConditionInfo, setShowConditionInfo] = useState(false)
+  const [showNegoModal, setShowNegoModal] = useState(false)
+  const [negoEligibility, setNegoEligibility] = useState<{ eligible: boolean; reason?: string; existing_negotiation_id?: string } | null>(null)
 
   const isAvailable = isProductAvailable(product)
   const canNegotiate = isProductNegotiable(product)
@@ -51,6 +57,13 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const discount = product.original_price && product.original_price > product.price
     ? formatDiscount(product.original_price, product.price)
     : null
+
+  // Check eligibility on mount if user is logged in
+  useEffect(() => {
+    if (user && !isOwnProduct && canNegotiate) {
+      checkNegotiationEligibility(product.id).then(setNegoEligibility)
+    }
+  }, [user, product.id, isOwnProduct, canNegotiate])
 
   // Track page view on mount
   useState(() => {
@@ -67,6 +80,21 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         alert('Produk ini tidak dapat dinegosiasikan')
         return
       }
+
+      // Check if user already has active negotiation
+      if (negoEligibility && !negoEligibility.eligible) {
+        if (negoEligibility.existing_negotiation_id) {
+          const confirm = window.confirm(
+            'Anda sudah memiliki negosiasi aktif untuk produk ini. Lihat negosiasi sekarang?'
+          )
+          if (confirm) {
+            router.push(`/negotiations/${negoEligibility.existing_negotiation_id}`)
+          }
+        } else {
+          alert(negoEligibility.reason || 'Anda tidak dapat membuat negosiasi baru saat ini')
+        }
+        return
+      }
       
       logUserAction('negotiation_cta_clicked', { 
         product_id: product.id, 
@@ -74,8 +102,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         current_price: product.price 
       })
       
-      // TODO: Open negotiation modal or navigate to negotiation page
-      console.log('Start negotiation for product:', product.id)
+      setShowNegoModal(true)
     })
   }
 
@@ -363,6 +390,18 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           )}
         </div>
       </div>
+
+      {/* Negotiation Modal */}
+      <NegotiationModal
+        product={product}
+        isOpen={showNegoModal}
+        onClose={() => setShowNegoModal(false)}
+        onSuccess={() => {
+          setShowNegoModal(false)
+          // Refresh eligibility
+          checkNegotiationEligibility(product.id).then(setNegoEligibility)
+        }}
+      />
     </>
   )
 }

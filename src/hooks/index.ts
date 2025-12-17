@@ -26,7 +26,6 @@ export {
   useNegotiations,
   useNegotiationDetail,
   useCreateNegotiation,
-  useUpdateNegotiation,
   useCancelNegotiation,
 } from './useNegotiations'
 
