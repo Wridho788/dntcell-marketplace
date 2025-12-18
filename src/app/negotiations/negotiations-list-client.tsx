@@ -165,7 +165,7 @@ export function NegotiationsListClient() {
                         <div className="flex items-baseline gap-2">
                           <span className="text-xs text-neutral-600">Penawaran:</span>
                           <span className="text-sm font-bold text-primary-600">
-                            {formatCurrency(negotiation.offered_price)}
+                            {formatCurrency(negotiation.offer_price)}
                           </span>
                         </div>
                         {negotiation.final_price && (

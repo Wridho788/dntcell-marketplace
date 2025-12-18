@@ -16,7 +16,7 @@ export async function onNegotiationAccepted(
     id: string
     buyer_id: string
     product_name: string
-    offered_price: number
+    offer_price: number
   }
 ) {
   try {
@@ -212,7 +212,7 @@ export async function onNewMessage(
  *     id: negotiation.id,
  *     buyer_id: negotiation.buyer_id,
  *     product_name: product.name,
- *     offered_price: negotiation.offered_price
+ *     offer_price: negotiation.offer_price
  *   })
  *   
  *   return NextResponse.json({ success: true })

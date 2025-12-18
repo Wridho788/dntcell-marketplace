@@ -24,7 +24,7 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
         <p className="text-sm text-neutral-600 mb-6 max-w-sm leading-[1.6]">{description}</p>
       )}
       {action && (
-        <Button onClick={action.onClick}>{action.label}</Button>
+        <Button onClick={action.onClick} variant={'outline'}>{action.label}</Button>
       )}
     </div>
   )

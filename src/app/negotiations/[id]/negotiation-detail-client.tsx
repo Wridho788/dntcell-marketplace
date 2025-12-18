@@ -170,7 +170,7 @@ export function NegotiationDetailClient({ negotiationId }: NegotiationDetailClie
             <div className="flex justify-between items-center">
               <span className="text-sm text-neutral-600">Penawaran Anda</span>
               <span className="font-bold text-primary-600">
-                {formatCurrency(negotiation.offered_price)}
+                {formatCurrency(negotiation.offer_price)}
               </span>
             </div>
             {negotiation.final_price && (
@@ -196,14 +196,14 @@ export function NegotiationDetailClient({ negotiationId }: NegotiationDetailClie
         </div>
 
         {/* Notes */}
-        {(negotiation.buyer_note || negotiation.admin_note || negotiation.rejection_reason) && (
+        {(negotiation.note || negotiation.admin_note || negotiation.rejection_reason) && (
           <div className="bg-white border border-neutral-200 rounded-xl p-4">
             <h2 className="text-sm font-semibold text-neutral-600 mb-3">Catatan</h2>
             <div className="space-y-3">
-              {negotiation.buyer_note && (
+              {negotiation.note && (
                 <div className="bg-neutral-50 rounded-lg p-3">
                   <p className="text-xs text-neutral-600 mb-1">Catatan Anda:</p>
-                  <p className="text-sm text-neutral-900">{negotiation.buyer_note}</p>
+                  <p className="text-sm text-neutral-900">{negotiation.note}</p>
                 </div>
               )}
               {negotiation.admin_note && (

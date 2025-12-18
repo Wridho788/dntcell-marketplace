@@ -56,14 +56,14 @@ export function NegotiationModal({ product, isOpen, onClose, onSuccess }: Negoti
       logUserAction('nego_submitted', {
         product_id: product.id,
         product_name: product.name,
-        offered_price: price,
+        offer_price: price,
         original_price: product.price
       })
 
       const negotiation = await createNegotiation({
         product_id: product.id,
-        offered_price: price,
-        buyer_note: note.trim() || undefined
+        offer_price: price,
+        note: note.trim() || undefined
       })
 
       logUserAction('nego_created', {
@@ -76,14 +76,27 @@ export function NegotiationModal({ product, isOpen, onClose, onSuccess }: Negoti
     } catch (err: any) {
       console.error('Failed to create negotiation:', err)
       
-      if (err.response?.data?.message?.includes('already exists')) {
+      // Handle different error types from the API
+      const errorMessage = err?.data?.message || err?.message
+      
+      if (err?.status === 409 || errorMessage?.includes('already exists') || errorMessage?.includes('sudah memiliki')) {
         setError('Anda sudah memiliki negosiasi aktif untuk produk ini')
-      } else if (err.response?.data?.message?.includes('unavailable')) {
-        setError('Produk tidak tersedia untuk negosiasi')
-      } else if (err.response?.data?.message?.includes('out of range')) {
-        setError('Harga penawaran di luar jangkauan yang diizinkan')
+      } else if (err?.status === 404 || errorMessage?.includes('not found') || errorMessage?.includes('tidak ditemukan')) {
+        setError('Produk tidak ditemukan')
+      } else if (err?.status === 400) {
+        if (errorMessage?.includes('unavailable') || errorMessage?.includes('tidak tersedia')) {
+          setError('Produk tidak tersedia untuk negosiasi')
+        } else if (errorMessage?.includes('not negotiable') || errorMessage?.includes('tidak dapat dinegosiasikan')) {
+          setError('Produk ini tidak dapat dinegosiasikan')
+        } else if (errorMessage?.includes('out of range') || errorMessage?.includes('harus antara')) {
+          setError(errorMessage)
+        } else {
+          setError(errorMessage || 'Data tidak valid. Silakan periksa kembali.')
+        }
+      } else if (err?.status === 401 || errorMessage?.includes('Unauthorized') || errorMessage?.includes('login')) {
+        setError('Anda harus login terlebih dahulu')
       } else {
-        setError('Gagal mengirim penawaran. Silakan coba lagi.')
+        setError(errorMessage || 'Gagal mengirim penawaran. Silakan coba lagi.')
       }
     } finally {
       setIsSubmitting(false)
@@ -236,7 +249,8 @@ export function NegotiationModal({ product, isOpen, onClose, onSuccess }: Negoti
             <Button
               type="submit"
               size="lg"
-              className="w-full"
+              className="w-full text-black"
+              variant={'outline'}
               disabled={isSubmitting || !offeredPrice || parseFloat(offeredPrice) < minPrice || parseFloat(offeredPrice) >= maxPrice}
             >
               {isSubmitting ? 'Mengirim...' : 'Kirim Penawaran'}

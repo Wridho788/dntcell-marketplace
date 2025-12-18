@@ -7,10 +7,10 @@ export interface Negotiation {
   product_id: string
   buyer_id: string
   seller_id: string
-  offered_price: number
+  offer_price: number
   final_price?: number
   status: NegotiationStatus
-  buyer_note?: string
+  note?: string
   admin_note?: string
   rejection_reason?: string
   used: boolean
@@ -28,8 +28,8 @@ export interface Negotiation {
 
 export interface CreateNegotiationPayload {
   product_id: string
-  offered_price: number
-  buyer_note?: string
+  offer_price: number
+  note?: string
 }
 
 export interface NegotiationEligibility {
@@ -108,12 +108,9 @@ export const checkNegotiationEligibility = async (productId: string): Promise<Ne
  * Create new negotiation
  */
 export const createNegotiation = async (payload: CreateNegotiationPayload): Promise<Negotiation> => {
-  const response = await axiosClient.post<Negotiation>('/negotiations', payload, {
-    headers: {
-      'Prefer': 'return=representation'
-    }
-  })
-  return response.data
+  // Use Next.js API route instead of direct Supabase REST API
+  const response = await axiosClient.post<{ success: boolean; data: Negotiation }>('/api/negotiations', payload)
+  return response.data.data
 }
 
 /**
