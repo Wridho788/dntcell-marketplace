@@ -5,10 +5,8 @@ import {
   Clock, 
   CheckCircle2, 
   XCircle, 
-  CreditCard,
   HandshakeIcon,
-  DollarSign,
-  Ban
+  DollarSign
 } from 'lucide-react'
 
 interface OrderStatusBadgeProps {
@@ -50,35 +48,35 @@ export function getStatusConfig(status: OrderStatus) {
     actionable: boolean
     canCancel: boolean
   }> = {
-    pending: {
-      label: 'Menunggu Konfirmasi',
+    created: {
+      label: 'Pesanan Dibuat',
       colorClass: 'bg-warning-100 text-warning-700',
       icon: Clock,
-      description: 'Pesanan sedang menunggu konfirmasi dari penjual',
-      actionable: false,
-      canCancel: true
-    },
-    waiting_payment: {
-      label: 'Menunggu Pembayaran',
-      colorClass: 'bg-info-100 text-info-700',
-      icon: CreditCard,
-      description: 'Silakan lakukan pembayaran dan upload bukti transfer',
+      description: 'Pesanan berhasil dibuat, silakan lakukan pembayaran',
       actionable: true,
       canCancel: true
     },
     waiting_meetup: {
-      label: 'Janji Temu',
+      label: 'Menunggu Pertemuan',
       colorClass: 'bg-purple-100 text-purple-700',
       icon: HandshakeIcon,
       description: 'Menunggu jadwal pertemuan untuk transaksi',
       actionable: false,
       canCancel: true
     },
+    meeting_done: {
+      label: 'Pertemuan Selesai',
+      colorClass: 'bg-info-100 text-info-700',
+      icon: CheckCircle2,
+      description: 'Pertemuan telah dilakukan, menunggu konfirmasi',
+      actionable: false,
+      canCancel: false
+    },
     paid: {
       label: 'Sudah Dibayar',
       colorClass: 'bg-success-100 text-success-700',
       icon: DollarSign,
-      description: 'Pembayaran sudah dikonfirmasi, menunggu admin memproses',
+      description: 'Pembayaran sudah dikonfirmasi',
       actionable: false,
       canCancel: false
     },
@@ -97,16 +95,8 @@ export function getStatusConfig(status: OrderStatus) {
       description: 'Pesanan telah dibatalkan',
       actionable: false,
       canCancel: false
-    },
-    rejected: {
-      label: 'Ditolak',
-      colorClass: 'bg-error-100 text-error-700',
-      icon: Ban,
-      description: 'Pesanan ditolak oleh penjual',
-      actionable: false,
-      canCancel: false
     }
   }
 
-  return configs[status] || configs.pending
+  return configs[status] || configs.created
 }

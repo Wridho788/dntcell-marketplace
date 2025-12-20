@@ -19,7 +19,7 @@ interface PaymentMethodModalProps {
   productName: string
   finalPrice: number
   negotiationId?: string
-  onConfirm: (method: PaymentMethod, deliveryType?: 'meetup' | 'shipping') => void
+  onConfirm: (method: PaymentMethod, deliveryType?: 'meetup' | 'delivery') => void
 }
 
 export function PaymentMethodModal({ 
@@ -48,7 +48,7 @@ export function PaymentMethodModal({
     }
   }
 
-  const handleTransferOptionSelect = (deliveryType: 'meetup' | 'shipping') => {
+  const handleTransferOptionSelect = (deliveryType: 'meetup' | 'delivery') => {
     if (!agreeToTerms && deliveryType === 'meetup') {
       alert('Harap setujui syarat dan ketentuan terlebih dahulu')
       return
@@ -192,7 +192,7 @@ export function PaymentMethodModal({
 
             {/* Transfer Normal */}
             <button
-              onClick={() => handleTransferOptionSelect('shipping')}
+              onClick={() => handleTransferOptionSelect('delivery')}
               className="w-full flex items-start gap-4 p-4 border-2 border-neutral-200 hover:border-primary-300 rounded-xl transition-all"
             >
               <div className="p-3 bg-primary-100 rounded-lg">

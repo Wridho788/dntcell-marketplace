@@ -155,7 +155,7 @@ export function OrderDetailClient({ orderId }: OrderDetailClientProps) {
             <p className="text-sm text-neutral-600">{statusConfig.description}</p>
           </div>
 
-          {order.order_status === 'pending' && (
+          {order.order_status === 'created' && (
             <div className="mt-3 p-3 bg-warning-50 rounded-lg flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-warning-600 shrink-0 mt-0.5" />
               <div className="flex-1">

@@ -195,7 +195,7 @@ export function OrderDetailClient({ orderId }: OrderDetailClientProps) {
           </div>
 
           {/* Status-specific info */}
-          {order.order_status === 'pending' && (
+          {order.order_status === 'created' && (
             <div className="mt-3 p-3 bg-warning-50 rounded-lg flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-warning-600 shrink-0 mt-0.5" />
               <div className="flex-1">
@@ -209,7 +209,7 @@ export function OrderDetailClient({ orderId }: OrderDetailClientProps) {
             </div>
           )}
 
-          {order.order_status === 'waiting_payment' && (
+          {order.order_status === 'waiting_meetup' && (
             <div className="mt-3 p-3 bg-info-50 rounded-lg flex items-start gap-2">
               <Clock className="w-4 h-4 text-info-600 shrink-0 mt-0.5" />
               <div className="flex-1">
@@ -344,7 +344,7 @@ export function OrderDetailClient({ orderId }: OrderDetailClientProps) {
           </div>
 
           {/* Upload Payment Proof */}
-          {order.order_status === 'waiting_payment' && (
+          {order.payment_status === 'unpaid' && order.payment_method === 'transfer' && (
             <div className="mt-4 pt-4 border-t border-neutral-200">
               <h3 className="text-sm font-semibold text-neutral-900 mb-2">
                 Bukti Pembayaran

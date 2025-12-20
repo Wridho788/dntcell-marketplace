@@ -187,7 +187,7 @@ export function CreateOrderClient() {
                   : 'Silakan kembali dan coba lagi.'}
               </p>
             </div>
-            <Button onClick={() => router.push('/products')} className="w-full">
+            <Button onClick={() => router.push('/products')} className="w-full" variant='outline'>
               Lihat Produk Lain
             </Button>
           </div>
@@ -359,14 +359,12 @@ export function CreateOrderClient() {
             </div>
           </div>
         </section>
-      </main>
-
-      {/* Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 p-4 safe-area-bottom z-40">
+      <div className="bg-white border-t border-neutral-200 p-4 safe-area-bottom z-40">
         <div className="container-mobile">
           <Button 
             size="lg" 
             className="w-full"
+            variant={'outline'}
             onClick={handleConfirmOrder}
             disabled={isCreating}
           >
@@ -381,6 +379,9 @@ export function CreateOrderClient() {
           </Button>
         </div>
       </div>
+      </main>
+
+      {/* Bottom Action Bar */}
     </div>
   )
 }

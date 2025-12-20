@@ -1,10 +1,10 @@
 import axiosClient from '@/libs/axios/axiosClient'
 
-// Order status types based on Sprint 3 spec
-export type OrderStatus = 'pending' | 'waiting_payment' | 'waiting_meetup' | 'paid' | 'completed' | 'cancelled' | 'rejected'
+// Order status types based on database enum
+export type OrderStatus = 'created' | 'waiting_meetup' | 'meeting_done' | 'paid' | 'completed' | 'cancelled'
 export type PaymentStatus = 'unpaid' | 'paid' | 'failed' | 'refunded'
 export type PaymentMethod = 'transfer' | 'cod' | 'meetup'
-export type DeliveryType = 'meetup' | 'shipping'
+export type DeliveryType = 'meetup' | 'delivery'
 
 export interface Order {
   id: string
@@ -121,7 +121,7 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<Order> =
   // Ensure required status fields are set
   const orderPayload = {
     ...payload,
-    order_status: 'pending' as OrderStatus,
+    order_status: 'created' as OrderStatus,
     payment_status: 'unpaid' as PaymentStatus,
   }
   
