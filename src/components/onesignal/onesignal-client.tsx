@@ -36,7 +36,8 @@ export function OneSignalClient({ appId }: OneSignalClientProps) {
           
           // Add error handler for script loading
           script.onerror = () => {
-            console.warn('OneSignal SDK failed to load from CDN. Push notifications disabled.')
+            // Silent fail - OneSignal is optional
+            return
           }
           
           document.head.appendChild(script)
@@ -56,19 +57,19 @@ export function OneSignalClient({ appId }: OneSignalClientProps) {
         const OneSignal = await Promise.race([
           window.OneSignalDeferred,
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('OneSignal initialization timeout')), 5000)
+            setTimeout(() => reject(new Error('OneSignal initialization timeout')), 10000)
           )
         ])
 
         // Check if OneSignal loaded properly
         if (!OneSignal || typeof OneSignal.init !== 'function') {
-          console.warn('OneSignal SDK not available. Push notifications disabled.')
+          // Silent fail - don't show warning for optional feature
           return
         }
 
         // Check if app ID is provided
         if (!appId) {
-          console.warn('OneSignal App ID not provided. Push notifications disabled.')
+          // Silent fail - don't show warning for optional feature
           return
         }
 
@@ -83,12 +84,12 @@ export function OneSignalClient({ appId }: OneSignalClientProps) {
         })
 
         setIsInitialized(true)
-        console.log('OneSignal initialized successfully')
+        // OneSignal initialized successfully - silent mode
 
         // Listen for subscription changes
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         OneSignal.User.PushSubscription.addEventListener('change', async (event: any) => {
-          console.log('Push subscription changed:', event)
+          // Subscription changed - silent mode
           
           if (event.current.id) {
             setPlayerId(event.current.id)
@@ -135,11 +136,11 @@ export function OneSignalClient({ appId }: OneSignalClientProps) {
 
           // Set external user ID
           await window.OneSignal.login(user.id)
-          console.log('OneSignal external user ID set:', user.id)
+          // OneSignal user logged in - silent mode
         } else {
           // User logged out - logout from OneSignal
           await window.OneSignal.logout()
-          console.log('OneSignal user logged out')
+          // OneSignal user logged out - silent mode
         }
       } catch (error) {
         // Silent fail for auth changes
@@ -173,7 +174,7 @@ async function registerPlayerId(userId: string, playerId: string) {
       throw new Error('Failed to register player ID')
     }
 
-    console.log('Player ID registered successfully:', playerId)
+    // Player ID registered successfully - silent mode
   } catch (error) {
     console.error('Error registering player ID:', error)
   }
@@ -190,7 +191,7 @@ export async function requestNotificationPermission() {
 
   try {
     const permission = await window.OneSignal.Notifications.requestPermission()
-    console.log('Notification permission:', permission)
+    // Notification permission granted - silent mode
     return permission
   } catch (error) {
     console.info('Error requesting notification permission:', error instanceof Error ? error.message : 'Unknown error')
