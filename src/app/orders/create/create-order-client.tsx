@@ -5,23 +5,29 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { MobileHeader } from '@/components/navigation/mobile-header'
 import { Button } from '@/components/ui/button'
 import { getProductById } from '@/services/product.service'
+import { getNegotiationById } from '@/services/negotiation.service'
+import { createOrder } from '@/services/order.service'
 import type { Product } from '@/services/product.service'
-import { AlertCircle, CheckCircle2, Copy, CreditCard, HandshakeIcon } from 'lucide-react'
+import type { Negotiation } from '@/services/negotiation.service'
+import type { PaymentMethod, DeliveryType } from '@/services/order.service'
+import { AlertCircle, CheckCircle2, Copy, CreditCard, HandshakeIcon, Loader2 } from 'lucide-react'
 import Image from 'next/image'
-
-type PaymentMethod = 'cod' | 'bank_transfer'
 
 export function CreateOrderClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
   const productId = searchParams.get('product_id')
+  const negotiationId = searchParams.get('negotiation_id')
   const paymentMethod = searchParams.get('payment_method') as PaymentMethod
+  const deliveryType = searchParams.get('delivery_type') as DeliveryType
   
   const [product, setProduct] = useState<Product | null>(null)
+  const [negotiation, setNegotiation] = useState<Negotiation | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
 
   // Bank details (dummy)
   const bankDetails = {
@@ -37,28 +43,41 @@ export function CreateOrderClient() {
       return
     }
 
-    if (!['cod', 'bank_transfer'].includes(paymentMethod)) {
+    if (!['transfer', 'meetup', 'cod'].includes(paymentMethod)) {
       setError('Metode pembayaran tidak valid')
       setLoading(false)
       return
     }
 
-    // Fetch product details
-    const fetchProduct = async () => {
+    // Fetch product and negotiation details
+    const fetchData = async () => {
       try {
         setLoading(true)
-        const data = await getProductById(productId)
+        const productData = await getProductById(productId)
         
         // Check if product is available
-        if (data.status !== 'available') {
-          if (data.status === 'sold') {
+        if (productData.status !== 'available') {
+          if (productData.status === 'sold') {
             setError('Produk ini sudah terjual')
           } else {
             setError('Produk ini tidak tersedia saat ini')
           }
           setProduct(null)
         } else {
-          setProduct(data)
+          setProduct(productData)
+          
+          // Fetch negotiation if exists
+          if (negotiationId) {
+            try {
+              const negoData = await getNegotiationById(negotiationId)
+              if (negoData.status === 'approved') {
+                setNegotiation(negoData)
+              }
+            } catch (err) {
+              console.error('Error fetching negotiation:', err)
+            }
+          }
+          
           setError(null)
         }
       } catch (err) {
@@ -69,8 +88,8 @@ export function CreateOrderClient() {
       }
     }
 
-    fetchProduct()
-  }, [productId, paymentMethod])
+    fetchData()
+  }, [productId, negotiationId, paymentMethod])
 
   const handleCopyAccountNumber = () => {
     navigator.clipboard.writeText(bankDetails.accountNumber)
@@ -78,10 +97,32 @@ export function CreateOrderClient() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleConfirmOrder = () => {
-    // TODO: Create order in database
-    alert('Fitur konfirmasi pesanan akan segera hadir!')
-    router.push('/orders')
+  const handleConfirmOrder = async () => {
+    if (!product || !paymentMethod) return
+
+    try {
+      setIsCreating(true)
+
+      // Determine final price
+      const finalPrice = negotiation?.final_price || product.price
+
+      // Create order
+      const order = await createOrder({
+        product_id: product.id,
+        negotiation_id: negotiation?.id,
+        final_price: finalPrice,
+        payment_method: paymentMethod,
+        delivery_type: deliveryType || (paymentMethod === 'meetup' || paymentMethod === 'cod' ? 'meetup' : undefined),
+      })
+
+      // Redirect to order detail
+      router.push(`/orders/${order.id}`)
+    } catch (err) {
+      console.error('Error creating order:', err)
+      alert('Gagal membuat pesanan. Silakan coba lagi.')
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   if (loading) {
@@ -90,7 +131,7 @@ export function CreateOrderClient() {
         <MobileHeader title="Buat Pesanan" showBack />
         <div className="container-mobile py-8 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4" />
+            <Loader2 className="animate-spin h-12 w-12 text-primary-600 mx-auto mb-4" />
             <p className="text-neutral-600">Memuat...</p>
           </div>
         </div>
@@ -160,10 +201,10 @@ export function CreateOrderClient() {
                 {product.name}
               </h3>
               <p className="text-sm text-neutral-600 mb-2">
-                Kondisi: <span className="font-medium">{product.condition === 'new' ? 'Baru' : 'Bekas'}</span>
+                Kondisi: <span className="font-medium">{product.condition === 'new' ? 'Baru' : product.condition === 'like-new' ? 'Seperti Baru' : 'Bekas'}</span>
               </p>
               <p className="text-lg font-bold text-primary-600">
-                Rp {product.price.toLocaleString('id-ID')}
+                Rp {(negotiation?.final_price || product.price).toLocaleString('id-ID')}
               </p>
             </div>
           </div>
@@ -173,21 +214,25 @@ export function CreateOrderClient() {
         <section className="bg-white rounded-xl p-4 space-y-4">
           <h2 className="font-semibold text-neutral-900">Metode Pembayaran</h2>
           
-          {paymentMethod === 'cod' ? (
+          {(paymentMethod === 'meetup' || paymentMethod === 'cod') || (paymentMethod === 'transfer' && deliveryType === 'meetup') ? (
             <div className="flex gap-3 items-start p-4 bg-success-50 border border-success-200 rounded-lg">
               <div className="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center shrink-0">
                 <HandshakeIcon className="w-5 h-5 text-success-600" />
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="font-semibold text-success-900 mb-1">
-                  Cash on Delivery (COD)
+                  {paymentMethod === 'transfer' && deliveryType === 'meetup' 
+                    ? 'Transfer Setelah Lihat Barang' 
+                    : 'Cash on Delivery (COD)'}
                 </p>
                 <p className="text-sm text-success-800">
-                  Bayar langsung saat barang diterima. Pastikan Anda menyiapkan uang pas.
+                  {paymentMethod === 'transfer' && deliveryType === 'meetup'
+                    ? 'Anda akan transfer setelah bertemu dan memeriksa kondisi barang.'
+                    : 'Bayar langsung saat barang diterima. Pastikan Anda menyiapkan uang pas.'}
                 </p>
               </div>
             </div>
-          ) : (
+          ) : paymentMethod === 'transfer' ? (
             <div className="space-y-4">
               <div className="flex gap-3 items-start p-4 bg-primary-50 border border-primary-200 rounded-lg">
                 <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center shrink-0">
@@ -257,7 +302,7 @@ export function CreateOrderClient() {
                 </ol>
               </div>
             </div>
-          )}
+          ) : null}
         </section>
 
         {/* Order Summary */}
@@ -268,20 +313,20 @@ export function CreateOrderClient() {
             <div className="flex justify-between text-sm">
               <span className="text-neutral-600">Subtotal</span>
               <span className="text-neutral-900">
-                Rp {product.price.toLocaleString('id-ID')}
+                Rp {(negotiation?.final_price || product.price).toLocaleString('id-ID')}
               </span>
             </div>
             
             <div className="flex justify-between text-sm">
-              <span className="text-neutral-600">Ongkos Kirim</span>
-              <span className="text-neutral-900">Akan dihitung</span>
+              <span className="text-neutral-600">Biaya Lainnya</span>
+              <span className="text-neutral-900">-</span>
             </div>
             
             <div className="pt-3 border-t border-neutral-200">
               <div className="flex justify-between">
                 <span className="font-semibold text-neutral-900">Total</span>
                 <span className="text-xl font-bold text-primary-600">
-                  Rp {product.price.toLocaleString('id-ID')}
+                  Rp {(negotiation?.final_price || product.price).toLocaleString('id-ID')}
                 </span>
               </div>
             </div>
@@ -296,8 +341,16 @@ export function CreateOrderClient() {
             size="lg" 
             className="w-full"
             onClick={handleConfirmOrder}
+            disabled={isCreating}
           >
-            Konfirmasi Pesanan
+            {isCreating ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Membuat Pesanan...
+              </>
+            ) : (
+              'Konfirmasi Pesanan'
+            )}
           </Button>
         </div>
       </div>

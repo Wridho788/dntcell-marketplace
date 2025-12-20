@@ -11,6 +11,7 @@ import { ErrorState } from '@/components/ui/error-state'
 import { getProductById } from '@/services/product.service'
 import { getNegotiationDetail } from '@/services/negotiation.service'
 import { createOrder } from '@/services/order.service'
+import type { PaymentMethod } from '@/services/order.service'
 import { formatCurrency } from '@/lib/utils/format'
 import { logUserAction } from '@/lib/utils/logger'
 import type { Product } from '@/services/product.service'
@@ -23,8 +24,6 @@ import {
   AlertCircle,
   CheckCircle2
 } from 'lucide-react'
-
-type PaymentMethod = 'cod' | 'transfer' | 'ewallet'
 
 export function CheckoutClient() {
   const router = useRouter()
@@ -162,9 +161,8 @@ export function CheckoutClient() {
         product_id: product.id,
         negotiation_id: negotiationId || undefined,
         final_price: getFinalPrice(),
-        payment_method: paymentMethod!,
-        shipping_address: shippingAddress,
-        notes: notes.trim() || undefined
+        payment_method: (paymentMethod === 'cod' ? 'meetup' : paymentMethod) as PaymentMethod,
+        delivery_type: paymentMethod === 'cod' ? 'meetup' as const : undefined
       }
 
       const order = await createOrder(orderPayload)

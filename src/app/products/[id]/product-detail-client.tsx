@@ -6,11 +6,13 @@ import { FavoriteButton } from "@/components/ui/favorite-button";
 import { PriceTag } from "@/components/ui/price-tag";
 import { ImageGallery } from "@/components/product/image-gallery";
 import { NegotiationModal } from "@/components/negotiation/negotiation-modal";
+import { PaymentMethodModal } from "@/components/order/payment-method-modal";
 import { useRequireAuth } from "@/lib/hooks/useAuth";
 import { useAuthStore } from "@/lib/store/auth";
 import { logUserAction } from "@/lib/utils/logger";
 import { checkNegotiationEligibility } from "@/services/negotiation.service";
 import type { Product } from "@/services/product.service";
+import type { PaymentMethod, DeliveryType } from "@/services/order.service";
 import {
   MapPin,
   MessageCircle,
@@ -140,6 +142,26 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       // Show payment method selection modal
       setShowPaymentModal(true);
     });
+  };
+
+  const handlePaymentMethodConfirm = (method: PaymentMethod, deliveryType?: DeliveryType) => {
+    // Build query params
+    const params = new URLSearchParams({
+      product_id: product.id,
+      payment_method: method,
+    })
+
+    if (deliveryType) {
+      params.append('delivery_type', deliveryType)
+    }
+
+    // Check if there's an approved negotiation
+    if (negoEligibility?.existing_negotiation_id) {
+      params.append('negotiation_id', negoEligibility.existing_negotiation_id)
+    }
+
+    // Redirect to create order page
+    router.push(`/orders/create?${params.toString()}`)
   };
 
   const handleChat = () => {
@@ -405,77 +427,18 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           </div>
         </div>
         
-      {/* Payment Method Modal */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-6 space-y-4 animate-slide-up">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-neutral-900">
-                Pilih Metode Pembayaran
-              </h2>
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="p-2 hover:bg-neutral-100 rounded-lg transition-colors"
-              >
-                <span className="text-2xl">&times;</span>
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {/* COD Option */}
-              <button
-                onClick={() => {
-                  setShowPaymentModal(false);
-                  router.push(
-                    `/orders/create?product_id=${product.id}&payment_method=cod`
-                  );
-                }}
-                className="w-full p-4 border-2 border-neutral-200 rounded-xl hover:border-primary-500 hover:bg-primary-50 transition-all text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center">
-                    <HandshakeIcon className="w-6 h-6 text-success-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-neutral-900">
-                      Cash on Delivery (COD)
-                    </p>
-                    <p className="text-sm text-neutral-600">
-                      Bayar saat barang diterima
-                    </p>
-                  </div>
-                </div>
-              </button>
-
-              {/* Bank Transfer Option */}
-              <button
-                onClick={() => {
-                  setShowPaymentModal(false);
-                  router.push(
-                    `/orders/create?product_id=${product.id}&payment_method=bank_transfer`
-                  );
-                }}
-                className="w-full p-4 border-2 border-neutral-200 rounded-xl hover:border-primary-500 hover:bg-primary-50 transition-all text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                    <span className="text-2xl">🏦</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-neutral-900">
-                      Transfer Bank
-                    </p>
-                    <p className="text-sm text-neutral-600">
-                      Transfer ke Bank Mandiri
-                    </p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       </main>
+
+      {/* Payment Method Modal */}
+      <PaymentMethodModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        productId={product.id}
+        productName={product.name}
+        finalPrice={product.price}
+        negotiationId={negoEligibility?.existing_negotiation_id}
+        onConfirm={handlePaymentMethodConfirm}
+      />
 
       {/* Negotiation Modal */}
       <NegotiationModal

@@ -27,11 +27,11 @@ export function OrdersListClient() {
     
     switch (tab) {
       case 'active':
-        return orders.filter(o => ['pending', 'confirmed', 'processing', 'shipped', 'delivered'].includes(o.status))
+        return orders.filter(o => ['pending', 'waiting_payment', 'waiting_meetup', 'paid'].includes(o.order_status))
       case 'completed':
-        return orders.filter(o => o.status === 'completed')
+        return orders.filter(o => o.order_status === 'completed')
       case 'cancelled':
-        return orders.filter(o => o.status === 'cancelled')
+        return orders.filter(o => ['cancelled', 'rejected'].includes(o.order_status))
       default:
         return orders
     }
@@ -39,9 +39,9 @@ export function OrdersListClient() {
 
   const filteredOrders = filterByTab(activeTab)
   const activeCounts = {
-    active: orders?.filter(o => ['pending', 'confirmed', 'processing', 'shipped', 'delivered'].includes(o.status)).length || 0,
-    completed: orders?.filter(o => o.status === 'completed').length || 0,
-    cancelled: orders?.filter(o => o.status === 'cancelled').length || 0
+    active: orders?.filter(o => ['pending', 'waiting_payment', 'waiting_meetup', 'paid'].includes(o.order_status)).length || 0,
+    completed: orders?.filter(o => o.order_status === 'completed').length || 0,
+    cancelled: orders?.filter(o => ['cancelled', 'rejected'].includes(o.order_status)).length || 0
   }
 
   const renderEmptyState = () => {
@@ -154,7 +154,7 @@ export function OrdersListClient() {
                     <p className="text-xs text-neutral-600 mb-1">
                       #{order.id.slice(0, 8).toUpperCase()}
                     </p>
-                    <OrderStatusBadge status={order.status} size="sm" />
+                    <OrderStatusBadge status={order.order_status} size="sm" />
                   </div>
                   <ArrowRight className="w-5 h-5 text-neutral-400 shrink-0" />
                 </div>
@@ -164,7 +164,7 @@ export function OrdersListClient() {
                   <div className="flex gap-3 mb-3">
                     <div className="relative w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-neutral-200">
                       <Image
-                        src={order.product.image || '/images/placeholder.png'}
+                        src={order.product.main_image_url || '/images/placeholder.png'}
                         alt={order.product.name}
                         fill
                         className="object-cover"
@@ -195,7 +195,7 @@ export function OrdersListClient() {
                     <p className="text-xs text-neutral-600">
                       {order.payment_method === 'cod' && 'COD'}
                       {order.payment_method === 'transfer' && 'Transfer'}
-                      {order.payment_method === 'ewallet' && 'E-Wallet'}
+                      {order.payment_method === 'meetup' && 'Meetup'}
                     </p>
                   )}
                 </div>

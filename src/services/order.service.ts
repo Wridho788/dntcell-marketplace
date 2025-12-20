@@ -1,5 +1,11 @@
 import axiosClient from '@/libs/axios/axiosClient'
 
+// Order status types based on Sprint 3 spec
+export type OrderStatus = 'pending' | 'waiting_payment' | 'waiting_meetup' | 'paid' | 'completed' | 'cancelled' | 'rejected'
+export type PaymentStatus = 'unpaid' | 'paid' | 'failed' | 'refunded'
+export type PaymentMethod = 'transfer' | 'cod' | 'meetup'
+export type DeliveryType = 'meetup' | 'shipping'
+
 export interface Order {
   id: string
   buyer_id: string
@@ -7,25 +13,36 @@ export interface Order {
   product_id: string
   negotiation_id?: string
   final_price: number
-  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'completed'
-  payment_status: 'pending' | 'paid' | 'failed' | 'refunded'
-  payment_method?: string
-  shipping_address?: Record<string, unknown>
-  notes?: string
+  order_status: OrderStatus
+  payment_status: PaymentStatus
+  payment_method?: PaymentMethod
+  payment_reference?: string
+  delivery_type?: DeliveryType
+  meetup_location?: string
+  meetup_at?: string
+  cancel_reason?: string
   created_at: string
   updated_at: string
   product?: {
     id: string
     name: string
-    image: string
+    main_image_url: string
+    selling_price: number
+  }
+  seller?: {
+    id: string
+    profiles?: {
+      full_name?: string
+    }
   }
 }
 
 export interface OrderStatusLog {
   id: string
   order_id: string
-  status: string
-  notes?: string
+  from_status: string | null
+  to_status: string
+  changed_by: string
   created_at: string
 }
 
@@ -33,9 +50,21 @@ export interface CreateOrderPayload {
   product_id: string
   negotiation_id?: string
   final_price: number
-  payment_method?: string
-  shipping_address?: Record<string, unknown>
-  notes?: string
+  payment_method: PaymentMethod
+  delivery_type?: DeliveryType
+  meetup_location?: string
+  meetup_at?: string
+}
+
+export interface CancelOrderPayload {
+  cancel_reason: string
+}
+
+export interface PaymentProof {
+  id: string
+  order_id: string
+  image_url: string
+  created_at: string
 }
 
 /**
@@ -96,11 +125,14 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<Order> =
 }
 
 /**
- * Cancel order (user can only cancel pending orders)
+ * Cancel order (user can only cancel certain statuses)
  */
-export const cancelOrder = async (id: string): Promise<Order> => {
+export const cancelOrder = async (id: string, payload: CancelOrderPayload): Promise<Order> => {
   const response = await axiosClient.patch<Order>(`/orders?id=eq.${id}`, 
-    { status: 'cancelled' },
+    { 
+      order_status: 'cancelled',
+      cancel_reason: payload.cancel_reason
+    },
     {
       headers: {
         'Prefer': 'return=representation'
@@ -111,11 +143,43 @@ export const cancelOrder = async (id: string): Promise<Order> => {
 }
 
 /**
+ * Upload payment proof
+ */
+export const uploadPaymentProof = async (orderId: string, imageUrl: string): Promise<PaymentProof> => {
+  const response = await axiosClient.post<PaymentProof>('/payment_proofs', 
+    {
+      order_id: orderId,
+      image_url: imageUrl
+    },
+    {
+      headers: {
+        'Prefer': 'return=representation'
+      }
+    }
+  )
+  return response.data
+}
+
+/**
+ * Get payment proofs for an order
+ */
+export const getPaymentProofs = async (orderId: string): Promise<PaymentProof[]> => {
+  const response = await axiosClient.get<PaymentProof[]>('/payment_proofs', {
+    params: {
+      order_id: `eq.${orderId}`,
+      select: '*',
+      order: 'created_at.desc'
+    }
+  })
+  return response.data
+}
+
+/**
  * Update order status (admin only - but included for completeness)
  */
-export const updateOrderStatus = async (id: string, status: Order['status']): Promise<Order> => {
+export const updateOrderStatus = async (id: string, status: OrderStatus): Promise<Order> => {
   const response = await axiosClient.patch<Order>(`/orders?id=eq.${id}`, 
-    { status },
+    { order_status: status },
     {
       headers: {
         'Prefer': 'return=representation'
@@ -132,6 +196,8 @@ const orderService = {
   createOrder,
   cancelOrder,
   updateOrderStatus,
+  uploadPaymentProof,
+  getPaymentProofs,
 }
 
 export default orderService

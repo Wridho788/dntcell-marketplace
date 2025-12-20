@@ -1,17 +1,18 @@
 'use client'
 
-import type { Order } from '@/services/order.service'
+import type { OrderStatus } from '@/services/order.service'
 import { 
   Clock, 
   CheckCircle2, 
   XCircle, 
-  Package,
-  Truck,
-  Home
+  CreditCard,
+  HandshakeIcon,
+  DollarSign,
+  Ban
 } from 'lucide-react'
 
 interface OrderStatusBadgeProps {
-  status: Order['status']
+  status: OrderStatus
   size?: 'sm' | 'md' | 'lg'
 }
 
@@ -40,56 +41,70 @@ export function OrderStatusBadge({ status, size = 'md' }: OrderStatusBadgeProps)
   )
 }
 
-export function getStatusConfig(status: Order['status']) {
-  const configs = {
+export function getStatusConfig(status: OrderStatus) {
+  const configs: Record<OrderStatus, {
+    label: string
+    colorClass: string
+    icon: React.ComponentType<{ className?: string }>
+    description: string
+    actionable: boolean
+    canCancel: boolean
+  }> = {
     pending: {
       label: 'Menunggu Konfirmasi',
       colorClass: 'bg-warning-100 text-warning-700',
       icon: Clock,
-      description: 'Pesanan sedang menunggu konfirmasi dari admin',
-      actionable: false
+      description: 'Pesanan sedang menunggu konfirmasi dari penjual',
+      actionable: false,
+      canCancel: true
     },
-    confirmed: {
-      label: 'Dikonfirmasi',
+    waiting_payment: {
+      label: 'Menunggu Pembayaran',
       colorClass: 'bg-info-100 text-info-700',
-      icon: CheckCircle2,
-      description: 'Pesanan telah dikonfirmasi dan akan segera diproses',
-      actionable: false
+      icon: CreditCard,
+      description: 'Silakan lakukan pembayaran dan upload bukti transfer',
+      actionable: true,
+      canCancel: true
     },
-    processing: {
-      label: 'Diproses',
-      colorClass: 'bg-primary-100 text-primary-700',
-      icon: Package,
-      description: 'Pesanan sedang diproses dan dikemas',
-      actionable: false
+    waiting_meetup: {
+      label: 'Janji Temu',
+      colorClass: 'bg-purple-100 text-purple-700',
+      icon: HandshakeIcon,
+      description: 'Menunggu jadwal pertemuan untuk transaksi',
+      actionable: false,
+      canCancel: true
     },
-    shipped: {
-      label: 'Dikirim',
-      colorClass: 'bg-info-100 text-info-700',
-      icon: Truck,
-      description: 'Pesanan sedang dalam pengiriman',
-      actionable: false
-    },
-    delivered: {
-      label: 'Diterima',
+    paid: {
+      label: 'Sudah Dibayar',
       colorClass: 'bg-success-100 text-success-700',
-      icon: Home,
-      description: 'Pesanan telah diterima',
-      actionable: true
+      icon: DollarSign,
+      description: 'Pembayaran sudah dikonfirmasi, menunggu admin memproses',
+      actionable: false,
+      canCancel: false
     },
     completed: {
       label: 'Selesai',
       colorClass: 'bg-success-100 text-success-700',
       icon: CheckCircle2,
       description: 'Transaksi telah selesai',
-      actionable: false
+      actionable: false,
+      canCancel: false
     },
     cancelled: {
       label: 'Dibatalkan',
       colorClass: 'bg-error-100 text-error-700',
       icon: XCircle,
       description: 'Pesanan telah dibatalkan',
-      actionable: false
+      actionable: false,
+      canCancel: false
+    },
+    rejected: {
+      label: 'Ditolak',
+      colorClass: 'bg-error-100 text-error-700',
+      icon: Ban,
+      description: 'Pesanan ditolak oleh penjual',
+      actionable: false,
+      canCancel: false
     }
   }
 

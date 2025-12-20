@@ -78,6 +78,11 @@ export const getNegotiationDetail = async (id: string): Promise<Negotiation> => 
 }
 
 /**
+ * Alias for getNegotiationDetail (for consistency)
+ */
+export const getNegotiationById = getNegotiationDetail
+
+/**
  * Check if user is eligible to create negotiation for a product
  */
 export const checkNegotiationEligibility = async (productId: string): Promise<NegotiationEligibility> => {
@@ -126,6 +131,7 @@ export const cancelNegotiation = async (id: string): Promise<void> => {
 const negotiationService = {
   getNegotiationsByUser,
   getNegotiationDetail,
+  getNegotiationById,
   checkNegotiationEligibility,
   createNegotiation,
   cancelNegotiation,
