@@ -66,7 +66,7 @@ export function PaymentMethodModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-      <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-neutral-900">
@@ -91,7 +91,7 @@ export function PaymentMethodModal({
 
         {/* Payment Methods */}
         {!showTransferOptions ? (
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
             {/* Transfer Bank */}
             <button
               onClick={() => handleMethodSelect('transfer')}
@@ -177,7 +177,7 @@ export function PaymentMethodModal({
           </div>
         ) : (
           /* Transfer Options */
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
             <button
               onClick={() => setShowTransferOptions(false)}
               className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1 mb-2"
