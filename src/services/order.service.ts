@@ -48,6 +48,8 @@ export interface OrderStatusLog {
 
 export interface CreateOrderPayload {
   product_id: string
+  buyer_id?: string
+  seller_id?: string
   negotiation_id?: string
   final_price: number
   payment_method: PaymentMethod

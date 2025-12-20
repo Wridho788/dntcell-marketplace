@@ -66,7 +66,7 @@ export function PaymentMethodModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-      <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-2xl p-6 max-h-[120vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-neutral-900">
@@ -91,7 +91,7 @@ export function PaymentMethodModal({
 
         {/* Payment Methods */}
         {!showTransferOptions ? (
-          <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+          <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 mb-8">
             {/* Transfer Bank */}
             <button
               onClick={() => handleMethodSelect('transfer')}
@@ -117,7 +117,7 @@ export function PaymentMethodModal({
             {/* COD / Meetup */}
             <button
               onClick={() => handleMethodSelect('meetup')}
-              className={`w-full flex items-start gap-4 p-4 border-2 rounded-xl transition-all ${
+              className={`w-full flex items-start gap-4 p-4 border-2 rounded-xl transition-all mb-8 ${
                 selectedMethod === 'meetup'
                   ? 'border-primary-500 bg-primary-50'
                   : 'border-neutral-200 hover:border-primary-300'
@@ -138,7 +138,7 @@ export function PaymentMethodModal({
 
             {/* Terms for Meetup */}
             {selectedMethod === 'meetup' && (
-              <div className="mt-4">
+              <div className="mt-4 mb-8">
                 <div className="bg-warning-50 border border-warning-200 rounded-lg p-4 mb-4">
                   <div className="flex gap-2">
                     <AlertCircle className="w-5 h-5 text-warning-600 shrink-0 mt-0.5" />
@@ -169,6 +169,7 @@ export function PaymentMethodModal({
                   onClick={handleMeetupConfirm}
                   disabled={!agreeToTerms}
                   className="w-full mt-4"
+                  variant={'outline'}
                 >
                   Lanjutkan
                 </Button>

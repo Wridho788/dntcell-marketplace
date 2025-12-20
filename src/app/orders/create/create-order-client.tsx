@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useAuthStore } from '@/lib/store/auth'
 import { MobileHeader } from '@/components/navigation/mobile-header'
 import { Button } from '@/components/ui/button'
 import { getProductById } from '@/services/product.service'
@@ -16,6 +17,7 @@ import Image from 'next/image'
 export function CreateOrderClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user } = useAuthStore()
   
   const productId = searchParams.get('product_id')
   const negotiationId = searchParams.get('negotiation_id')
@@ -98,7 +100,10 @@ export function CreateOrderClient() {
   }
 
   const handleConfirmOrder = async () => {
-    if (!product || !paymentMethod) return
+    if (!product || !paymentMethod || !user) {
+      alert('Data tidak lengkap. Pastikan Anda sudah login.')
+      return
+    }
 
     try {
       setIsCreating(true)
@@ -106,20 +111,42 @@ export function CreateOrderClient() {
       // Determine final price
       const finalPrice = negotiation?.final_price || product.price
 
-      // Create order
-      const order = await createOrder({
+      console.log('Creating order with payload:', {
         product_id: product.id,
+        buyer_id: user.id,
+        seller_id: product.seller_id,
         negotiation_id: negotiation?.id,
         final_price: finalPrice,
         payment_method: paymentMethod,
         delivery_type: deliveryType || (paymentMethod === 'meetup' || paymentMethod === 'cod' ? 'meetup' : undefined),
       })
 
+      // Create order
+      const order = await createOrder({
+        product_id: product.id,
+        buyer_id: user.id,
+        seller_id: product.seller_id,
+        negotiation_id: negotiation?.id,
+        final_price: finalPrice,
+        payment_method: paymentMethod,
+        delivery_type: deliveryType || (paymentMethod === 'meetup' || paymentMethod === 'cod' ? 'meetup' : undefined),
+      })
+
+      console.log('Order created successfully:', order)
+
       // Redirect to order detail
       router.push(`/orders/${order.id}`)
     } catch (err) {
       console.error('Error creating order:', err)
-      alert('Gagal membuat pesanan. Silakan coba lagi.')
+      
+      // Show more detailed error message
+      if (err && typeof err === 'object' && 'response' in err) {
+        const error = err as { response?: { data?: { message?: string; hint?: string } } }
+        const errorMsg = error.response?.data?.message || error.response?.data?.hint || 'Gagal membuat pesanan. Silakan coba lagi.'
+        alert(errorMsg)
+      } else {
+        alert('Gagal membuat pesanan. Silakan coba lagi.')
+      }
     } finally {
       setIsCreating(false)
     }
