@@ -91,7 +91,14 @@ axiosClient.interceptors.response.use(
     return response
   },
   (error: AxiosError) => {
-    console.error('[Axios] Request failed:', error.message, error.response?.status)
+    console.error('[Axios] Request failed:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      url: error.config?.url,
+      method: error.config?.method,
+    })
     
     // Normalize error structure
     const normalizedError = {

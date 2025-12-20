@@ -118,11 +118,22 @@ export const getOrderStatusLogs = async (orderId: string): Promise<OrderStatusLo
  * Create new order
  */
 export const createOrder = async (payload: CreateOrderPayload): Promise<Order> => {
-  const response = await axiosClient.post<Order>('/orders', payload, {
+  // Ensure required status fields are set
+  const orderPayload = {
+    ...payload,
+    order_status: 'pending' as OrderStatus,
+    payment_status: 'unpaid' as PaymentStatus,
+  }
+  
+  console.log('[Order Service] Creating order with payload:', orderPayload)
+  
+  const response = await axiosClient.post<Order>('/orders', orderPayload, {
     headers: {
       'Prefer': 'return=representation'
     }
   })
+  
+  console.log('[Order Service] Order created successfully:', response.data)
   return response.data
 }
 
